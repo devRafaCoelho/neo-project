@@ -24,9 +24,14 @@ function PublicRoute({ children }) {
   return !user ? children : <Navigate to="/dashboard" replace />;
 }
 
+function routerBasename() {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  return base || undefined;
+}
+
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename()}>
       <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/cadastro" element={<PublicRoute><RegisterPage /></PublicRoute>} />
