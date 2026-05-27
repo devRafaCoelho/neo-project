@@ -110,8 +110,19 @@ export default function GestaoSapPage() {
             />
           </Box>
 
-          <Box sx={{ mt: 3 }}>
-            <Button variant="contained" startIcon={<Search />} onClick={handleBuscar}>
+          <Box
+            sx={{
+              mt: 3,
+              display: 'flex',
+              justifyContent: { xs: 'stretch', sm: 'flex-start' },
+            }}
+          >
+            <Button
+              variant="contained"
+              startIcon={<Search />}
+              onClick={handleBuscar}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Buscar
             </Button>
           </Box>

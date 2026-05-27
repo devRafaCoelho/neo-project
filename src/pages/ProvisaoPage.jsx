@@ -272,7 +272,18 @@ export default function ProvisaoPage() {
               </Box>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+                mt: 4,
+                justifyContent: { sm: 'flex-end' },
+                '& .MuiButton-root': {
+                  width: { xs: '100%', sm: 'auto' },
+                },
+              }}
+            >
               <Button
                 variant="outlined"
                 color="error"
