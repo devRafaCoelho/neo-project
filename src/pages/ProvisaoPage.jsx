@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Grid, TextField,
+  Box, Card, CardContent, Typography, TextField,
   MenuItem, Button,
 } from '@mui/material';
 import { Save, Cancel } from '@mui/icons-material';
@@ -9,6 +9,26 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useSnackbar } from 'notistack';
 import { empresas, fornecedores, contasContabeis } from '../data/mockData';
+
+const formGridSx = {
+  display: 'grid',
+  gap: 2.5,
+  gridTemplateColumns: {
+    xs: '1fr',
+    md: 'repeat(2, minmax(0, 1fr))',
+  },
+};
+
+const tripleFieldRowSx = {
+  gridColumn: '1 / -1',
+  display: 'grid',
+  gap: 2.5,
+  gridTemplateColumns: {
+    xs: '1fr',
+    md: 'repeat(2, minmax(0, 1fr))',
+    lg: 'repeat(3, minmax(0, 1fr))',
+  },
+};
 
 const schema = yup.object({
   empresa: yup.string().required('Empresa obrigatória'),
@@ -61,7 +81,7 @@ export default function ProvisaoPage() {
     if (forn) setValue('codigoFornecedor', forn.codigo);
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async () => {
     await new Promise((r) => setTimeout(r, 700));
     enqueueSnackbar('Provisão criada com sucesso!', { variant: 'success', autoHideDuration: 4000 });
     reset();
@@ -89,56 +109,49 @@ export default function ProvisaoPage() {
               Dados da Provisão
             </Typography>
 
-            <Grid container spacing={2.5}>
-              {/* Empresa */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="empresa"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Empresa *"
-                      select
-                      fullWidth
-                      error={!!errors.empresa}
-                      helperText={errors.empresa?.message}
-                      onChange={(e) => { field.onChange(e); handleEmpresaChange(e); }}
-                    >
-                      {empresas.map((e) => (
-                        <MenuItem key={e.id} value={e.nome}>{e.nome}</MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+            <Box sx={formGridSx}>
+              <Controller
+                name="empresa"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Empresa *"
+                    select
+                    fullWidth
+                    error={!!errors.empresa}
+                    helperText={errors.empresa?.message}
+                    onChange={(e) => { field.onChange(e); handleEmpresaChange(e); }}
+                  >
+                    {empresas.map((e) => (
+                      <MenuItem key={e.id} value={e.nome}>{e.nome}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
 
-              {/* Conta Contábil */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="conta"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Conta Contábil *"
-                      select
-                      fullWidth
-                      error={!!errors.conta}
-                      helperText={errors.conta?.message}
-                    >
-                      {contasContabeis.map((c) => (
-                        <MenuItem key={c.codigo} value={c.codigo}>{c.codigo} — {c.descricao}</MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+              <Controller
+                name="conta"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Conta Contábil *"
+                    select
+                    fullWidth
+                    error={!!errors.conta}
+                    helperText={errors.conta?.message}
+                  >
+                    {contasContabeis.map((c) => (
+                      <MenuItem key={c.codigo} value={c.codigo}>{c.codigo} — {c.descricao}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
 
-              {/* Centro de Custo */}
-              <Grid item xs={12} md={4}>
+              <Box sx={tripleFieldRowSx}>
                 <TextField
                   label="Centro de Custo *"
                   fullWidth
@@ -147,10 +160,7 @@ export default function ProvisaoPage() {
                   helperText={errors.centroCusto?.message || (empresaSelecionada ? 'Preenchido automaticamente' : '')}
                   slotProps={{ inputLabel: { shrink: !!empresaSelecionada || undefined } }}
                 />
-              </Grid>
 
-              {/* Elemento PEP */}
-              <Grid item xs={12} md={4}>
                 <TextField
                   label="Elemento PEP"
                   fullWidth
@@ -158,10 +168,7 @@ export default function ProvisaoPage() {
                   slotProps={{ inputLabel: { shrink: !!empresaSelecionada || undefined } }}
                   helperText={empresaSelecionada ? 'Preenchido automaticamente' : ''}
                 />
-              </Grid>
 
-              {/* Ordem */}
-              <Grid item xs={12} md={4}>
                 <TextField
                   label="Ordem *"
                   fullWidth
@@ -170,101 +177,76 @@ export default function ProvisaoPage() {
                   helperText={errors.ordem?.message || (empresaSelecionada ? 'Preenchido automaticamente' : '')}
                   slotProps={{ inputLabel: { shrink: !!empresaSelecionada || undefined } }}
                 />
-              </Grid>
+              </Box>
 
-              {/* Valor */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Valor (R$) *"
-                  fullWidth
-                  type="number"
-                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                  {...register('valor')}
-                  error={!!errors.valor}
-                  helperText={errors.valor?.message}
-                />
-              </Grid>
+              <TextField
+                label="Valor (R$) *"
+                fullWidth
+                type="number"
+                slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+                {...register('valor')}
+                error={!!errors.valor}
+                helperText={errors.valor?.message}
+              />
 
-              {/* Data NF */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Data da NF (opcional)"
-                  fullWidth
-                  type="date"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  {...register('dataNf')}
-                />
-              </Grid>
+              <TextField
+                label="Data da NF (opcional)"
+                fullWidth
+                type="date"
+                slotProps={{ inputLabel: { shrink: true } }}
+                {...register('dataNf')}
+              />
 
-              {/* Fornecedor */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="fornecedor"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Fornecedor *"
-                      select
-                      fullWidth
-                      error={!!errors.fornecedor}
-                      helperText={errors.fornecedor?.message}
-                      onChange={(e) => { field.onChange(e); handleFornecedorChange(e); }}
-                    >
-                      {fornecedores.map((f) => (
-                        <MenuItem key={f.id} value={f.nome}>{f.nome}</MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+              <Controller
+                name="fornecedor"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Fornecedor *"
+                    select
+                    fullWidth
+                    error={!!errors.fornecedor}
+                    helperText={errors.fornecedor?.message}
+                    onChange={(e) => { field.onChange(e); handleFornecedorChange(e); }}
+                  >
+                    {fornecedores.map((f) => (
+                      <MenuItem key={f.id} value={f.nome}>{f.nome}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
 
-              {/* Código Fornecedor */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Código Fornecedor"
-                  fullWidth
-                  {...register('codigoFornecedor')}
-                  slotProps={{ inputLabel: { shrink: !!fornecedorSelecionado || undefined } }}
-                  helperText={fornecedorSelecionado ? 'Preenchido automaticamente' : ''}
-                />
-              </Grid>
+              <TextField
+                label="Código Fornecedor"
+                fullWidth
+                {...register('codigoFornecedor')}
+                slotProps={{ inputLabel: { shrink: !!fornecedorSelecionado || undefined } }}
+                helperText={fornecedorSelecionado ? 'Preenchido automaticamente' : ''}
+              />
 
-              {/* Nº NF */}
-              <Grid item xs={12} md={6}>
-                <TextField label="Nº NF (opcional)" fullWidth {...register('nfNumero')} />
-              </Grid>
+              <TextField label="Nº NF (opcional)" fullWidth {...register('nfNumero')} />
 
-              {/* Pedido de Compra */}
-              <Grid item xs={12} md={6}>
-                <TextField label="Pedido de Compra (opcional)" fullWidth {...register('pedidoCompra')} />
-              </Grid>
+              <TextField label="Pedido de Compra (opcional)" fullWidth {...register('pedidoCompra')} />
 
-              {/* Solicitante */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Nome do Solicitante *"
-                  fullWidth
-                  {...register('solicitante')}
-                  error={!!errors.solicitante}
-                  helperText={errors.solicitante?.message}
-                />
-              </Grid>
+              <TextField
+                label="Nome do Solicitante *"
+                fullWidth
+                {...register('solicitante')}
+                error={!!errors.solicitante}
+                helperText={errors.solicitante?.message}
+              />
 
-              {/* Departamento */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Departamento *"
-                  fullWidth
-                  {...register('departamento')}
-                  error={!!errors.departamento}
-                  helperText={errors.departamento?.message}
-                />
-              </Grid>
+              <TextField
+                label="Departamento *"
+                fullWidth
+                {...register('departamento')}
+                error={!!errors.departamento}
+                helperText={errors.departamento?.message}
+              />
 
-              {/* Justificativa */}
-              <Grid item xs={12}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <TextField
                   label="Justificativa *"
                   fullWidth
@@ -274,8 +256,8 @@ export default function ProvisaoPage() {
                   error={!!errors.justificativa}
                   helperText={errors.justificativa?.message}
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <Button
