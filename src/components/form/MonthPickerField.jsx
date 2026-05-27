@@ -1,5 +1,6 @@
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from '../../utils/dayjsPtBr';
+import { formatMesReferencia, parseMesReferencia } from '../../utils/periodo';
 
 /**
  * Seletor de mês/ano (MM/AAAA). value/onChange usam string "YYYY-MM" ou vazio.
@@ -11,10 +12,14 @@ export default function MonthPickerField({
   onBlur,
   error,
   helperText,
+  referenceDate,
   ...rest
 }) {
-  const parsed = value ? dayjs(`${value}-01`) : null;
-  const dayjsValue = parsed?.isValid() ? parsed : null;
+  const dayjsValue = parseMesReferencia(value);
+
+  const emitChange = (newValue) => {
+    onChange(formatMesReferencia(newValue));
+  };
 
   return (
     <DatePicker
@@ -22,8 +27,14 @@ export default function MonthPickerField({
       views={['year', 'month']}
       openTo="month"
       value={dayjsValue}
-      onChange={(newValue) => {
-        onChange(newValue && newValue.isValid() ? newValue.format('YYYY-MM') : '');
+      referenceDate={referenceDate ?? dayjs('2026-01-01')}
+      onChange={(newValue, context) => {
+        if (context.validationError == null) {
+          emitChange(newValue);
+        }
+      }}
+      onAccept={(newValue) => {
+        emitChange(newValue);
       }}
       format="MM/YYYY"
       slotProps={{

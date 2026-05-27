@@ -5,9 +5,11 @@ import {
   Stack, Switch, useMediaQuery, useTheme,
 } from '@mui/material';
 import {
-  Assessment, ExpandLess, ExpandMore, FileDownload, Search,
+  Assessment, ExpandLess, ExpandMore, FileDownload, Search, SearchOff,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import dayjs from '../utils/dayjsPtBr';
+import { periodoNoIntervalo } from '../utils/periodo';
 import { empresas } from '../data/mockData';
 import MonthPickerField from '../components/form/MonthPickerField';
 
@@ -25,22 +27,43 @@ const filterGridSx = {
   },
 };
 
-const gerarDados = (tipo, empresa) => {
-  const base = [
-    { id: 'R-001', empresa: 'Neoenergia Coelba', fornecedor: 'JR Teletrica', conta: '230L', tipo: 'OPEX', valor: 1100, desvio: -300, status: 'Aprovada', mes: 'Mai/26' },
-    { id: 'R-002', empresa: 'Neoenergia Elektro', fornecedor: 'Mgitech', conta: '220M', tipo: 'CAPEX', valor: 45000, desvio: 0, status: 'Pendente', mes: 'Mai/26' },
-    { id: 'R-003', empresa: 'Neoenergia Pernambuco', fornecedor: 'Telespazio', conta: '230D', tipo: 'OPEX', valor: 8500, desvio: -200, status: 'Aprovada', mes: 'Abr/26' },
-    { id: 'R-004', empresa: 'Neoenergia Brasília', fornecedor: 'Telefônica', conta: '2311', tipo: 'IFRS16', valor: 48000, desvio: 0, status: 'Aprovada', mes: 'Abr/26' },
-    { id: 'R-005', empresa: 'Neoenergia Coelba', fornecedor: 'Ericsson', conta: '2393', tipo: 'CAPEX', valor: 380000, desvio: -50000, status: 'Pendente', mes: 'Mai/26' },
-    { id: 'R-006', empresa: 'Neoenergia Cosern', fornecedor: 'Nokia', conta: '230L', tipo: 'OPEX', valor: 7200, desvio: 800, status: 'Aprovada', mes: 'Mar/26' },
-    { id: 'R-007', empresa: 'Neoenergia Pernambuco', fornecedor: 'Huawei', conta: '220M', tipo: 'CAPEX', valor: 128000, desvio: -12000, status: 'Rejeitada', mes: 'Mar/26' },
-    { id: 'R-008', empresa: 'Neoenergia Brasília', fornecedor: 'Digitech', conta: '230D', tipo: 'OPEX', valor: 3400, desvio: 0, status: 'Aprovada', mes: 'Fev/26' },
-  ];
-  return base.filter((r) => {
-    const matchTipo = !tipo || r.tipo === tipo;
-    const matchEmp = !empresa || r.empresa === empresa;
-    return matchTipo && matchEmp;
+/** periodo: YYYY-MM para filtro; mes: rótulo exibido */
+const RELATORIOS_BASE = [
+  { id: 'R-001', empresa: 'Neoenergia Coelba', fornecedor: 'JR Teletrica', conta: '230L', tipo: 'OPEX', valor: 1100, desvio: -300, status: 'Aprovada', mes: 'Mai/26', periodo: '2026-05' },
+  { id: 'R-002', empresa: 'Neoenergia Elektro', fornecedor: 'Mgitech', conta: '220M', tipo: 'CAPEX', valor: 45000, desvio: 0, status: 'Pendente', mes: 'Mai/26', periodo: '2026-05' },
+  { id: 'R-003', empresa: 'Neoenergia Pernambuco', fornecedor: 'Telespazio', conta: '230D', tipo: 'OPEX', valor: 8500, desvio: -200, status: 'Aprovada', mes: 'Abr/26', periodo: '2026-04' },
+  { id: 'R-004', empresa: 'Neoenergia Brasília', fornecedor: 'Telefônica', conta: '2311', tipo: 'IFRS16', valor: 48000, desvio: 0, status: 'Aprovada', mes: 'Abr/26', periodo: '2026-04' },
+  { id: 'R-005', empresa: 'Neoenergia Coelba', fornecedor: 'Ericsson', conta: '2393', tipo: 'CAPEX', valor: 380000, desvio: -50000, status: 'Pendente', mes: 'Mai/26', periodo: '2026-05' },
+  { id: 'R-006', empresa: 'Neoenergia Cosern', fornecedor: 'Nokia', conta: '230L', tipo: 'OPEX', valor: 7200, desvio: 800, status: 'Aprovada', mes: 'Mar/26', periodo: '2026-03' },
+  { id: 'R-007', empresa: 'Neoenergia Pernambuco', fornecedor: 'Huawei', conta: '220M', tipo: 'CAPEX', valor: 128000, desvio: -12000, status: 'Rejeitada', mes: 'Mar/26', periodo: '2026-03' },
+  { id: 'R-008', empresa: 'Neoenergia Brasília', fornecedor: 'Digitech', conta: '230D', tipo: 'OPEX', valor: 3400, desvio: 0, status: 'Aprovada', mes: 'Fev/26', periodo: '2026-02' },
+];
+
+function filtrarRelatorios({ tipo, empresa, status, mesInicio, mesFim }) {
+  return RELATORIOS_BASE.filter((r) => {
+    if (tipo !== 'Todos' && r.tipo !== tipo) return false;
+    if (empresa !== 'Todas' && r.empresa !== empresa) return false;
+    if (status !== 'Todos' && r.status !== status) return false;
+    if (!periodoNoIntervalo(r.periodo, mesInicio, mesFim)) return false;
+    return true;
   });
+}
+
+const tableThSx = {
+  p: '12px 16px',
+  textAlign: 'left',
+  bgcolor: 'primary.dark',
+  color: 'white',
+  fontSize: '0.8rem',
+  fontWeight: 700,
+  borderRadius: 0,
+  whiteSpace: 'nowrap',
+};
+
+const tableTdSx = {
+  p: '10px 16px',
+  fontSize: '0.82rem',
+  whiteSpace: 'nowrap',
 };
 
 function statusChipColor(status) {
@@ -58,6 +81,38 @@ function tipoChipColor(tipo) {
 function formatDesvio(desvio) {
   const formatted = desvio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   return `${desvio > 0 ? '+' : ''}${formatted}`;
+}
+
+function ResultadosEmptyState({ onLimparFiltros }) {
+  return (
+    <Box
+      sx={{
+        textAlign: 'center',
+        py: { xs: 5, sm: 6 },
+        px: 2,
+        borderRadius: 2,
+        bgcolor: '#F7FCF9',
+        border: '1px dashed',
+        borderColor: 'divider',
+      }}
+    >
+      <SearchOff sx={{ fontSize: 72, opacity: 0.35, mb: 2, color: 'primary.main' }} />
+      <Typography variant="h6" fontWeight={700} color="primary.dark" gutterBottom>
+        Nenhum registro encontrado
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ maxWidth: 420, mx: 'auto', mb: 3 }}
+      >
+        Não há dados para os filtros selecionados. Tente ampliar o período ou alterar tipo,
+        empresa ou status.
+      </Typography>
+      <Button variant="outlined" color="primary" onClick={onLimparFiltros}>
+        Limpar filtros
+      </Button>
+    </Box>
+  );
 }
 
 function RelatorioListCard({ row, expanded, onToggle }) {
@@ -161,8 +216,8 @@ export default function RelatoriosPage() {
   const theme = useTheme();
   const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { enqueueSnackbar } = useSnackbar();
-  const [tipo, setTipo] = useState('');
-  const [empresa, setEmpresa] = useState('');
+  const [tipo, setTipo] = useState('Todos');
+  const [empresa, setEmpresa] = useState('Todas');
   const [status, setStatus] = useState('Todos');
   const [mesInicio, setMesInicio] = useState('');
   const [mesFim, setMesFim] = useState('');
@@ -174,10 +229,14 @@ export default function RelatoriosPage() {
   const showList = isTabletOrMobile && modoLista;
 
   const handleFiltrar = () => {
-    const resultado = gerarDados(tipo, empresa).filter(
-      (r) => status === 'Todos' || r.status === status,
-    );
-    setDados(resultado);
+    const resultado = filtrarRelatorios({
+      tipo,
+      empresa,
+      status,
+      mesInicio,
+      mesFim,
+    });
+    setDados([...resultado]);
     setExpandedId(null);
   };
 
@@ -195,6 +254,19 @@ export default function RelatoriosPage() {
   const handleToggleCard = (id) => {
     setExpandedId((current) => (current === id ? null : id));
   };
+
+  const handleLimparFiltros = () => {
+    setTipo('Todos');
+    setEmpresa('Todas');
+    setStatus('Todos');
+    setMesInicio('');
+    setMesFim('');
+    setDados(null);
+    setExpandedId(null);
+  };
+
+  const semResultados = dados != null && dados.length === 0;
+  const comResultados = dados != null && dados.length > 0;
 
   const totalValor = dados?.reduce((s, r) => s + r.valor, 0) ?? 0;
   const totalDesvio = dados?.reduce((s, r) => s + r.desvio, 0) ?? 0;
@@ -218,7 +290,7 @@ export default function RelatoriosPage() {
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
             >
-              <MenuItem value="">Todos</MenuItem>
+              <MenuItem value="Todos">Todos</MenuItem>
               {tiposRelatorio.map((t) => (
                 <MenuItem key={t} value={t}>{t}</MenuItem>
               ))}
@@ -231,7 +303,7 @@ export default function RelatoriosPage() {
               value={empresa}
               onChange={(e) => setEmpresa(e.target.value)}
             >
-              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="Todas">Todas</MenuItem>
               {empresas.map((e) => (
                 <MenuItem key={e.id} value={e.nome}>{e.nome}</MenuItem>
               ))}
@@ -253,12 +325,14 @@ export default function RelatoriosPage() {
               label="Mês Início"
               value={mesInicio}
               onChange={setMesInicio}
+              referenceDate={dayjs('2026-02-01')}
             />
 
             <MonthPickerField
               label="Mês Fim"
               value={mesFim}
               onChange={setMesFim}
+              referenceDate={dayjs('2026-05-01')}
             />
           </Box>
 
@@ -277,7 +351,7 @@ export default function RelatoriosPage() {
             <Button variant="contained" startIcon={<Search />} onClick={handleFiltrar}>
               Filtrar
             </Button>
-            {dados && (
+            {comResultados && (
               <Button variant="outlined" startIcon={<FileDownload />} onClick={handleExportar}>
                 Exportar Excel
               </Button>
@@ -293,23 +367,25 @@ export default function RelatoriosPage() {
               <Typography variant="h6" fontWeight={700} color="primary.dark">
                 Resultados — {dados.length} registros
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                <Chip
-                  label={`Total: ${totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ fontWeight: 600 }}
-                />
-                <Chip
-                  label={`Desvio: ${totalDesvio >= 0 ? '+' : ''}${totalDesvio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
-                  color={totalDesvio < 0 ? 'error' : totalDesvio > 0 ? 'success' : 'default'}
-                  variant="outlined"
-                  sx={{ fontWeight: 600 }}
-                />
-              </Box>
+              {comResultados && (
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Chip
+                    label={`Total: ${totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
+                    color="primary"
+                    variant="outlined"
+                    sx={{ fontWeight: 600 }}
+                  />
+                  <Chip
+                    label={`Desvio: ${totalDesvio >= 0 ? '+' : ''}${totalDesvio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
+                    color={totalDesvio < 0 ? 'error' : totalDesvio > 0 ? 'success' : 'default'}
+                    variant="outlined"
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Box>
+              )}
             </Box>
 
-            {isTabletOrMobile && (
+            {comResultados && isTabletOrMobile && (
               <Box
                 sx={{
                   display: 'flex',
@@ -340,13 +416,11 @@ export default function RelatoriosPage() {
               </Box>
             )}
 
-            {dados.length === 0 && (
-              <Typography align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                Nenhum registro encontrado para os filtros selecionados.
-              </Typography>
+            {semResultados && (
+              <ResultadosEmptyState onLimparFiltros={handleLimparFiltros} />
             )}
 
-            {dados.length > 0 && showList && (
+            {comResultados && showList && (
               <Stack spacing={1.5}>
                 {dados.map((row) => (
                   <RelatorioListCard
@@ -359,28 +433,21 @@ export default function RelatoriosPage() {
               </Stack>
             )}
 
-            {dados.length > 0 && showTable && (
+            {comResultados && showTable && (
               <Box sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider' }}>
                 <Box
                   component="table"
-                  sx={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}
+                  sx={{
+                    width: 'max-content',
+                    minWidth: '100%',
+                    borderCollapse: 'collapse',
+                    tableLayout: 'auto',
+                  }}
                 >
                   <Box component="thead">
                     <Box component="tr">
                       {TABLE_HEADERS.map((h) => (
-                        <Box
-                          component="th"
-                          key={h}
-                          sx={{
-                            p: '12px 16px',
-                            textAlign: 'left',
-                            bgcolor: 'primary.dark',
-                            color: 'white',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            borderRadius: 0,
-                          }}
-                        >
+                        <Box component="th" key={h} sx={tableThSx}>
                           {h}
                         </Box>
                       ))}
@@ -398,22 +465,13 @@ export default function RelatoriosPage() {
                       >
                         <Box
                           component="td"
-                          sx={{
-                            p: '10px 16px',
-                            fontSize: '0.82rem',
-                            color: 'primary.dark',
-                            fontWeight: 600,
-                          }}
+                          sx={{ ...tableTdSx, color: 'primary.dark', fontWeight: 600 }}
                         >
                           {row.id}
                         </Box>
-                        <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem' }}>
-                          {row.empresa}
-                        </Box>
-                        <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem' }}>
-                          {row.fornecedor}
-                        </Box>
-                        <Box component="td" sx={{ p: '10px 16px' }}>
+                        <Box component="td" sx={tableTdSx}>{row.empresa}</Box>
+                        <Box component="td" sx={tableTdSx}>{row.fornecedor}</Box>
+                        <Box component="td" sx={tableTdSx}>
                           <Chip
                             label={row.tipo}
                             size="small"
@@ -421,30 +479,22 @@ export default function RelatoriosPage() {
                             sx={{ fontWeight: 600, fontSize: '0.75rem' }}
                           />
                         </Box>
-                        <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem' }}>
-                          {row.conta}
-                        </Box>
-                        <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem' }}>
-                          {row.mes}
-                        </Box>
-                        <Box
-                          component="td"
-                          sx={{ p: '10px 16px', fontSize: '0.82rem', fontWeight: 600 }}
-                        >
+                        <Box component="td" sx={tableTdSx}>{row.conta}</Box>
+                        <Box component="td" sx={tableTdSx}>{row.mes}</Box>
+                        <Box component="td" sx={{ ...tableTdSx, fontWeight: 600 }}>
                           {row.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </Box>
                         <Box
                           component="td"
                           sx={{
-                            p: '10px 16px',
-                            fontSize: '0.82rem',
+                            ...tableTdSx,
                             fontWeight: 700,
                             color: row.desvio < 0 ? 'error.main' : row.desvio > 0 ? 'success.main' : 'text.secondary',
                           }}
                         >
                           {formatDesvio(row.desvio)}
                         </Box>
-                        <Box component="td" sx={{ p: '10px 16px' }}>
+                        <Box component="td" sx={tableTdSx}>
                           <Chip
                             label={row.status}
                             size="small"
