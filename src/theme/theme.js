@@ -34,7 +34,7 @@ const theme = createTheme({
     divider: '#E0EAE5',
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Nunito", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: { fontWeight: 700 },
     h2: { fontWeight: 700 },
     h3: { fontWeight: 600 },
@@ -48,6 +48,13 @@ const theme = createTheme({
     borderRadius: 10,
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          fontFamily: '"Nunito", "Roboto", "Helvetica", "Arial", sans-serif',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
