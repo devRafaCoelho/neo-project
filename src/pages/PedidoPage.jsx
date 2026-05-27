@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Grid, TextField,
+  Box, Card, CardContent, Typography, TextField,
   MenuItem, Button, Divider, Chip,
 } from '@mui/material';
 import { Save, Cancel, InfoOutlined } from '@mui/icons-material';
@@ -9,6 +9,31 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useSnackbar } from 'notistack';
 import { empresas, fornecedores, contasContabeis, tiposPedido, contratos } from '../data/mockData';
+import CurrencyTextField from '../components/form/CurrencyTextField';
+import CnpjTextField from '../components/form/CnpjTextField';
+import { digitsOnlyCnpj } from '../utils/cnpj';
+
+const formGridSx = {
+  display: 'grid',
+  gap: 2.5,
+  gridTemplateColumns: {
+    xs: '1fr',
+    md: 'repeat(2, minmax(0, 1fr))',
+  },
+};
+
+const formGridTripleSx = {
+  gridColumn: '1 / -1',
+  display: 'grid',
+  gap: 2.5,
+  gridTemplateColumns: {
+    xs: '1fr',
+    md: 'repeat(2, minmax(0, 1fr))',
+    lg: 'repeat(3, minmax(0, 1fr))',
+  },
+};
+
+const fullWidthField = { gridColumn: '1 / -1' };
 
 const schema = yup.object({
   tipoPedido: yup.string().required('Tipo de pedido obrigatório'),
@@ -16,7 +41,12 @@ const schema = yup.object({
   empresa: yup.string().required('Empresa obrigatória'),
   escopo: yup.string().required('Escopo obrigatório'),
   fornecedor: yup.string().required('Fornecedor obrigatório'),
-  cnpjFornecedor: yup.string(),
+  cnpjFornecedor: yup
+    .string()
+    .test('cnpj', 'CNPJ deve ter 14 dígitos', (val) => {
+      if (!val || !String(val).trim()) return true;
+      return digitsOnlyCnpj(val).length === 14;
+    }),
   tipoPagamento: yup.string().required('Tipo de pagamento obrigatório'),
   valor: yup
     .number()
@@ -46,7 +76,6 @@ export default function PedidoPage() {
     control,
     setValue,
     reset,
-    watch,
     formState: { errors },
   } = useForm({ resolver: yupResolver(schema) });
 
@@ -79,7 +108,7 @@ export default function PedidoPage() {
     setContratoSelecionado(cont);
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async () => {
     await new Promise((r) => setTimeout(r, 700));
     enqueueSnackbar('Pedido criado com sucesso! Aprovador notificado.', {
       variant: 'success',
@@ -113,160 +142,165 @@ export default function PedidoPage() {
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
           <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
 
-            {/* Tipo de Pedido */}
             <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>Tipo de Pedido</Typography>
-            <Grid container spacing={2.5} sx={{ mb: 3 }}>
-              <Grid item xs={12} md={8}>
-                <Controller
-                  name="tipoPedido"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Tipo de Pedido *"
-                      select
-                      fullWidth
-                      error={!!errors.tipoPedido}
-                      helperText={errors.tipoPedido?.message}
-                      onChange={(e) => { field.onChange(e); setTipoPedido(e.target.value); }}
-                    >
-                      {tiposPedido.map((t) => (
-                        <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                mb: 3,
+                gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+                alignItems: { md: 'center' },
+              }}
+            >
+              <Controller
+                name="tipoPedido"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Tipo de Pedido *"
+                    select
+                    fullWidth
+                    error={!!errors.tipoPedido}
+                    helperText={errors.tipoPedido?.message}
+                    onChange={(e) => { field.onChange(e); setTipoPedido(e.target.value); }}
+                  >
+                    {tiposPedido.map((t) => (
+                      <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
               {tipoPedido && (
-                <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Chip
-                    icon={<InfoOutlined />}
-                    label={temContrato ? 'Requer contrato ativo' : 'Sem vínculo contratual'}
-                    color={temContrato ? 'success' : 'warning'}
-                    variant="outlined"
-                  />
-                </Grid>
+                <Chip
+                  icon={<InfoOutlined />}
+                  label={temContrato ? 'Requer contrato ativo' : 'Sem vínculo contratual'}
+                  color={temContrato ? 'success' : 'warning'}
+                  variant="outlined"
+                  sx={{ justifySelf: { xs: 'start', md: 'center' } }}
+                />
               )}
-            </Grid>
+            </Box>
 
             <Divider sx={{ mb: 3 }} />
 
-            {/* Dados Gerais */}
             <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>Dados Gerais</Typography>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Assunto *"
-                  fullWidth
-                  {...register('assunto')}
-                  error={!!errors.assunto}
-                  helperText={errors.assunto?.message}
-                />
-              </Grid>
+            <Box sx={formGridSx}>
+              <TextField
+                label="Assunto *"
+                fullWidth
+                sx={fullWidthField}
+                {...register('assunto')}
+                error={!!errors.assunto}
+                helperText={errors.assunto?.message}
+              />
 
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="empresa"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Empresa *"
-                      select
-                      fullWidth
-                      error={!!errors.empresa}
-                      helperText={errors.empresa?.message}
-                      onChange={(e) => handleEmpresaChange(e, field)}
-                    >
-                      {empresas.map((e) => (
-                        <MenuItem key={e.id} value={e.nome}>{e.nome}</MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField label="Escopo *" fullWidth {...register('escopo')} error={!!errors.escopo} helperText={errors.escopo?.message} />
-              </Grid>
-
-              {/* Fornecedor */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="fornecedor"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Fornecedor *"
-                      select
-                      fullWidth
-                      error={!!errors.fornecedor}
-                      helperText={errors.fornecedor?.message}
-                      onChange={(e) => handleFornecedorChange(e, field)}
-                    >
-                      {fornecedores.map((f) => (
-                        <MenuItem key={f.id} value={f.nome}>{f.nome}</MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="CNPJ do Fornecedor"
-                  fullWidth
-                  {...register('cnpjFornecedor')}
-                  slotProps={{ inputLabel: { shrink: !!fornecedorSelecionado || undefined } }}
-                  helperText={fornecedorSelecionado ? 'Preenchido automaticamente' : ''}
-                />
-              </Grid>
-
-              {/* Contrato (somente se temContrato) */}
-              {temContrato && (
-                <Grid item xs={12} md={6}>
+              <Controller
+                name="empresa"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
                   <TextField
-                    label="Contrato"
+                    {...field}
+                    label="Empresa *"
                     select
                     fullWidth
-                    defaultValue=""
-                    onChange={handleContratoChange}
-                    helperText={contratosSelecionaveis.length === 0 ? 'Selecione fornecedor e empresa primeiro' : ''}
-                    disabled={contratosSelecionaveis.length === 0}
+                    error={!!errors.empresa}
+                    helperText={errors.empresa?.message}
+                    onChange={(e) => handleEmpresaChange(e, field)}
                   >
-                    {contratosSelecionaveis.map((c) => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.id} — {c.objeto}
-                        {' '}(Saldo: {c.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-                      </MenuItem>
+                    {empresas.map((e) => (
+                      <MenuItem key={e.id} value={e.nome}>{e.nome}</MenuItem>
                     ))}
                   </TextField>
-                </Grid>
+                )}
+              />
+
+              <TextField
+                label="Escopo *"
+                fullWidth
+                {...register('escopo')}
+                error={!!errors.escopo}
+                helperText={errors.escopo?.message}
+              />
+
+              <Controller
+                name="fornecedor"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Fornecedor *"
+                    select
+                    fullWidth
+                    error={!!errors.fornecedor}
+                    helperText={errors.fornecedor?.message}
+                    onChange={(e) => handleFornecedorChange(e, field)}
+                  >
+                    {fornecedores.map((f) => (
+                      <MenuItem key={f.id} value={f.nome}>{f.nome}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+
+              <Controller
+                name="cnpjFornecedor"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <CnpjTextField
+                    label="CNPJ do Fornecedor"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={!!errors.cnpjFornecedor}
+                    helperText={
+                      errors.cnpjFornecedor?.message
+                      || (fornecedorSelecionado ? 'Preenchido automaticamente' : '')
+                    }
+                    slotProps={{ inputLabel: { shrink: !!field.value || !!fornecedorSelecionado || undefined } }}
+                  />
+                )}
+              />
+
+              {temContrato && (
+                <TextField
+                  label="Contrato"
+                  select
+                  fullWidth
+                  defaultValue=""
+                  onChange={handleContratoChange}
+                  helperText={contratosSelecionaveis.length === 0 ? 'Selecione fornecedor e empresa primeiro' : ''}
+                  disabled={contratosSelecionaveis.length === 0}
+                >
+                  {contratosSelecionaveis.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.id} — {c.objeto}
+                      {' '}(Saldo: {c.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                    </MenuItem>
+                  ))}
+                </TextField>
               )}
 
               {temContrato && contratoSelecionado && (
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Item do Contrato"
-                    select
-                    fullWidth
-                    defaultValue=""
-                  >
-                    {contratoSelecionado.itens.map((it) => (
-                      <MenuItem key={it.codigo} value={it.codigo}>
-                        {it.codigo} — {it.descricao} ({it.unidade})
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
+                <TextField
+                  label="Item do Contrato"
+                  select
+                  fullWidth
+                  defaultValue=""
+                >
+                  {contratoSelecionado.itens.map((it) => (
+                    <MenuItem key={it.codigo} value={it.codigo}>
+                      {it.codigo} — {it.descricao} ({it.unidade})
+                    </MenuItem>
+                  ))}
+                </TextField>
               )}
 
-              {/* Tipo de Pagamento */}
-              <Grid item xs={12} md={4}>
+              <Box sx={formGridTripleSx}>
                 <Controller
                   name="tipoPagamento"
                   control={control}
@@ -285,10 +319,7 @@ export default function PedidoPage() {
                     </TextField>
                   )}
                 />
-              </Grid>
 
-              {/* Conta */}
-              <Grid item xs={12} md={4}>
                 <Controller
                   name="conta"
                   control={control}
@@ -308,95 +339,104 @@ export default function PedidoPage() {
                     </TextField>
                   )}
                 />
-              </Grid>
 
-              {/* Valor */}
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="Valor (R$) *"
-                  fullWidth
-                  type="number"
-                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                  {...register('valor')}
-                  error={!!errors.valor}
-                  helperText={errors.valor?.message}
+                <Controller
+                  name="valor"
+                  control={control}
+                  render={({ field }) => (
+                    <CurrencyTextField
+                      label="Valor (R$) *"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={!!errors.valor}
+                      helperText={errors.valor?.message}
+                    />
+                  )}
                 />
-              </Grid>
+              </Box>
 
-              <Grid item xs={12}>
-                <TextField
-                  label="Justificativa do Desvio"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  {...register('justificativaDesvio')}
-                  placeholder="Informe o desvio em relação ao planejado (se houver)"
-                />
-              </Grid>
-            </Grid>
+              <TextField
+                label="Justificativa do Desvio"
+                fullWidth
+                multiline
+                rows={2}
+                sx={fullWidthField}
+                {...register('justificativaDesvio')}
+                placeholder="Informe o desvio em relação ao planejado (se houver)"
+              />
+            </Box>
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Dados SAP */}
             <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>Dados SAP</Typography>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12} md={4}>
+            <Box sx={formGridSx}>
+              <Box sx={formGridTripleSx}>
                 <TextField label="NCM / Cód. Serviço / ISS" fullWidth {...register('ncm')} />
-              </Grid>
-              <Grid item xs={12} md={4}>
                 <TextField label="Nº Serviço / Código SAP" fullWidth {...register('codigoSap')} />
-              </Grid>
-              <Grid item xs={12} md={4}>
                 <TextField label="Descrição Item" fullWidth {...register('descricaoItem')} />
-              </Grid>
+              </Box>
 
               {isElektro && (
                 <>
-                  <Grid item xs={12}>
-                    <Chip label="Campos específicos Elektro" color="primary" variant="outlined" size="small" />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Chip
+                    label="Campos específicos Elektro"
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                    sx={{ ...fullWidthField, justifySelf: 'start' }}
+                  />
+                  <Box
+                    sx={{
+                      ...formGridTripleSx,
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        md: 'repeat(2, minmax(0, 1fr))',
+                        lg: 'repeat(4, minmax(0, 1fr))',
+                      },
+                    }}
+                  >
                     <TextField label="Diagrama Elektro" fullWidth {...register('diagrama')} />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
                     <TextField label="Atividade (Operação)" fullWidth {...register('atividade')} />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
                     <TextField label="Descrição Atividade" fullWidth {...register('descricaoAtividade')} />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
                     <TextField label="Classe de Custo" fullWidth {...register('classeCusto')} />
-                  </Grid>
+                  </Box>
                 </>
               )}
-            </Grid>
+            </Box>
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Solicitante */}
             <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>Solicitante</Typography>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Nome do Solicitante *"
-                  fullWidth
-                  {...register('solicitante')}
-                  error={!!errors.solicitante}
-                  helperText={errors.solicitante?.message}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Departamento *"
-                  fullWidth
-                  {...register('departamento')}
-                  error={!!errors.departamento}
-                  helperText={errors.departamento?.message}
-                />
-              </Grid>
-            </Grid>
+            <Box sx={formGridSx}>
+              <TextField
+                label="Nome do Solicitante *"
+                fullWidth
+                {...register('solicitante')}
+                error={!!errors.solicitante}
+                helperText={errors.solicitante?.message}
+              />
+              <TextField
+                label="Departamento *"
+                fullWidth
+                {...register('departamento')}
+                error={!!errors.departamento}
+                helperText={errors.departamento?.message}
+              />
+            </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+                mt: 4,
+                justifyContent: { sm: 'flex-end' },
+                '& .MuiButton-root': {
+                  width: { xs: '100%', sm: 'auto' },
+                },
+              }}
+            >
               <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={handleCancelar}>
                 Cancelar
               </Button>
