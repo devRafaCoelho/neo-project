@@ -1,7 +1,10 @@
+import { useState } from "react";
 import {
   AccountBalance,
   Description,
   Engineering,
+  ExpandLess,
+  ExpandMore,
   PendingActions,
   TrendingDown,
   TrendingUp,
@@ -12,8 +15,13 @@ import {
   Card,
   CardContent,
   Chip,
+  Collapse,
+  FormControlLabel,
   Stack,
+  Switch,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Bar,
@@ -104,7 +112,117 @@ function SectionTitle({ children }) {
   );
 }
 
+function statusChipColor(status) {
+  if (status === "Aprovada") return "success";
+  if (status === "Pendente") return "warning";
+  return "error";
+}
+
+function ProvisaoListCard({ provisao, expanded, onToggle }) {
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        borderColor: expanded ? "primary.main" : "divider",
+        bgcolor: expanded ? "#F7FCF9" : "background.paper",
+        transition: "border-color 0.2s, background-color 0.2s",
+      }}
+    >
+      <Box
+        onClick={onToggle}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+          p: 2,
+          cursor: "pointer",
+          userSelect: "none",
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" fontWeight={700} color="primary.dark">
+            {provisao.id}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {provisao.empresa}
+          </Typography>
+        </Box>
+        <Chip
+          label={provisao.status}
+          size="small"
+          color={statusChipColor(provisao.status)}
+          sx={{ fontWeight: 600, fontSize: "0.75rem", flexShrink: 0 }}
+        />
+        {expanded ? (
+          <ExpandLess color="primary" />
+        ) : (
+          <ExpandMore color="action" />
+        )}
+      </Box>
+      <Collapse in={expanded}>
+        <Box
+          sx={{
+            px: 2,
+            pb: 2,
+            pt: 2.5,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.25,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          {[
+            ["Fornecedor", provisao.fornecedor],
+            ["Conta", provisao.conta],
+            [
+              "Valor",
+              provisao.valor.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }),
+            ],
+            [
+              "Data",
+              new Date(provisao.data).toLocaleDateString("pt-BR"),
+            ],
+          ].map(([label, value]) => (
+            <Box
+              key={label}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 2,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                {label}
+              </Typography>
+              <Typography variant="body2" fontWeight={500} textAlign="right">
+                {value}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Collapse>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
+  const theme = useTheme();
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const [modoLista, setModoLista] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const showTable = !isTabletOrMobile || !modoLista;
+  const showList = isTabletOrMobile && modoLista;
+
+  const handleToggleCard = (id) => {
+    setExpandedId((current) => (current === id ? null : id));
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
@@ -286,6 +404,52 @@ export default function DashboardPage() {
       <Card>
         <CardContent sx={{ p: 3 }}>
           <SectionTitle>Provisões Recentes</SectionTitle>
+
+          {isTabletOrMobile && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={modoLista}
+                    onChange={(e) => {
+                      setModoLista(e.target.checked);
+                      setExpandedId(null);
+                    }}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2" fontWeight={600}>
+                    {modoLista ? "Modo lista" : "Modo tabela"}
+                  </Typography>
+                }
+                labelPlacement="end"
+                sx={{ m: 0 }}
+              />
+            </Box>
+          )}
+
+          {showList && (
+            <Stack spacing={1.5}>
+              {provisoesRecentes.map((p) => (
+                <ProvisaoListCard
+                  key={p.id}
+                  provisao={p}
+                  expanded={expandedId === p.id}
+                  onToggle={() => handleToggleCard(p.id)}
+                />
+              ))}
+            </Stack>
+          )}
+
+          {showTable && (
           <Box sx={{ overflowX: "auto" }}>
             <Box
               component="table"
@@ -375,13 +539,7 @@ export default function DashboardPage() {
                       <Chip
                         label={p.status}
                         size="small"
-                        color={
-                          p.status === "Aprovada"
-                            ? "success"
-                            : p.status === "Pendente"
-                              ? "warning"
-                              : "error"
-                        }
+                        color={statusChipColor(p.status)}
                         sx={{ fontWeight: 600, fontSize: "0.75rem" }}
                       />
                     </Box>
@@ -400,6 +558,7 @@ export default function DashboardPage() {
               </Box>
             </Box>
           </Box>
+          )}
         </CardContent>
       </Card>
     </Box>
