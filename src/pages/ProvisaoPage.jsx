@@ -9,6 +9,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useSnackbar } from 'notistack';
 import { empresas, fornecedores, contasContabeis } from '../data/mockData';
+import CurrencyTextField from '../components/form/CurrencyTextField';
+import DatePickerField from '../components/form/DatePickerField';
 
 const formGridSx = {
   display: 'grid',
@@ -179,22 +181,33 @@ export default function ProvisaoPage() {
                 />
               </Box>
 
-              <TextField
-                label="Valor (R$) *"
-                fullWidth
-                type="number"
-                slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                {...register('valor')}
-                error={!!errors.valor}
-                helperText={errors.valor?.message}
+              <Controller
+                name="valor"
+                control={control}
+                render={({ field }) => (
+                  <CurrencyTextField
+                    label="Valor (R$) *"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={!!errors.valor}
+                    helperText={errors.valor?.message}
+                  />
+                )}
               />
 
-              <TextField
-                label="Data da NF (opcional)"
-                fullWidth
-                type="date"
-                slotProps={{ inputLabel: { shrink: true } }}
-                {...register('dataNf')}
+              <Controller
+                name="dataNf"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <DatePickerField
+                    label="Data da NF (opcional)"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
 
               <Controller
