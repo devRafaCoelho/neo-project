@@ -1,23 +1,72 @@
 import { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Grid, TextField,
-  MenuItem, Button, Chip, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper,
-  TablePagination, LinearProgress, Tooltip,
+  Box, Card, CardContent, Typography, TextField,
+  MenuItem, Chip, Collapse, FormControlLabel,
+  Stack, Switch, LinearProgress, Tooltip,
+  TablePagination, useMediaQuery, useTheme,
 } from '@mui/material';
-import { Description, Warning, AccessTime, AttachMoney } from '@mui/icons-material';
+import {
+  Description, Warning, AccessTime, AttachMoney,
+  ExpandLess, ExpandMore,
+} from '@mui/icons-material';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip,
-  Legend, ResponsiveContainer,
+  ResponsiveContainer,
 } from 'recharts';
 import { contratos, contratosPorStatus, vencimentosPorMes } from '../data/mockData';
-import { useSnackbar } from 'notistack';
+
+const kpiGridSx = {
+  display: 'grid',
+  gap: 3,
+  gridTemplateColumns: {
+    xs: '1fr',
+    sm: 'repeat(2, minmax(0, 1fr))',
+    lg: 'repeat(4, minmax(0, 1fr))',
+  },
+};
+
+const filterGridSx = {
+  display: 'grid',
+  gap: 2,
+  mb: 3,
+  gridTemplateColumns: {
+    xs: '1fr',
+    sm: 'repeat(2, minmax(0, 1fr))',
+  },
+};
+
+const TABLE_HEADERS = [
+  'ID', 'Fornecedor', 'Empresa', 'Objeto', 'Status', 'Estratégia',
+  'Saldo Disp.', '% Utilizado', 'Vencimento', 'Responsável',
+];
+
+const tableThSx = {
+  p: '12px 16px',
+  textAlign: 'left',
+  bgcolor: 'primary.dark',
+  color: 'white',
+  fontSize: '0.8rem',
+  fontWeight: 700,
+  whiteSpace: 'nowrap',
+};
+
+const tableTdSx = {
+  p: '10px 16px',
+  fontSize: '0.82rem',
+  whiteSpace: 'nowrap',
+};
 
 const statusColor = (s) => {
   if (s === 'Ativo') return 'success';
   if (s === 'Em Alerta') return 'warning';
   if (s === 'A Vencer') return 'error';
   return 'default';
+};
+
+const progressBarColor = (percentual) => {
+  if (percentual > 80) return '#E3850D';
+  if (percentual > 60) return '#00A443';
+  return '#26BF64';
 };
 
 function KpiCard({ icon, label, value, sub, color }) {
@@ -37,206 +86,362 @@ function KpiCard({ icon, label, value, sub, color }) {
   );
 }
 
+function SectionTitle({ children }) {
+  return (
+    <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>
+      {children}
+    </Typography>
+  );
+}
+
+function UtilizadoBar({ percentual }) {
+  return (
+    <Tooltip title={`${percentual}% utilizado`}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 100 }}>
+        <LinearProgress
+          variant="determinate"
+          value={percentual}
+          sx={{
+            flex: 1,
+            height: 8,
+            borderRadius: 4,
+            bgcolor: '#DCEBE1',
+            '& .MuiLinearProgress-bar': {
+              bgcolor: progressBarColor(percentual),
+            },
+          }}
+        />
+        <Typography variant="caption" sx={{ whiteSpace: 'nowrap', fontWeight: 700, minWidth: 32 }}>
+          {percentual}%
+        </Typography>
+      </Box>
+    </Tooltip>
+  );
+}
+
+function ContratoListCard({ contrato, expanded, onToggle }) {
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        borderColor: expanded ? 'primary.main' : 'divider',
+        bgcolor: expanded ? '#F7FCF9' : 'background.paper',
+        transition: 'border-color 0.2s, background-color 0.2s',
+      }}
+    >
+      <Box
+        onClick={onToggle}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1.5,
+          p: 2,
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" fontWeight={700} color="primary.dark">
+            {contrato.id}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {contrato.fornecedor} — {contrato.empresa}
+          </Typography>
+        </Box>
+        <Chip
+          label={contrato.status}
+          size="small"
+          color={statusColor(contrato.status)}
+          sx={{ fontWeight: 600, fontSize: '0.75rem', flexShrink: 0 }}
+        />
+        {expanded ? <ExpandLess color="primary" /> : <ExpandMore color="action" />}
+      </Box>
+      <Collapse in={expanded}>
+        <Box
+          sx={{
+            px: 2,
+            pb: 2,
+            pt: 2.5,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.25,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          {[
+            ['Objeto', contrato.objeto],
+            ['Estratégia', contrato.estrategia],
+            [
+              'Saldo disponível',
+              contrato.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+            ],
+            ['Responsável', contrato.responsavel],
+            [
+              'Vencimento',
+              new Date(contrato.vencimento).toLocaleDateString('pt-BR'),
+            ],
+          ].map(([label, value]) => (
+            <Box
+              key={label}
+              sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                {label}
+              </Typography>
+              <Typography variant="body2" fontWeight={500} textAlign="right">
+                {value}
+              </Typography>
+            </Box>
+          ))}
+          <Box sx={{ pt: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 0.5, display: 'block' }}>
+              % Utilizado
+            </Typography>
+            <UtilizadoBar percentual={contrato.percentualUtilizado} />
+          </Box>
+        </Box>
+      </Collapse>
+    </Card>
+  );
+}
+
+function ContratoTableRow({ contrato, index }) {
+  return (
+    <Box
+      component="tr"
+      sx={{
+        bgcolor: index % 2 === 0 ? 'white' : '#F0F7F3',
+        '&:hover': { bgcolor: '#DCEBE1' },
+      }}
+    >
+      <Box component="td" sx={{ ...tableTdSx, color: 'primary.dark', fontWeight: 700 }}>
+        {contrato.id}
+      </Box>
+      <Box component="td" sx={tableTdSx}>{contrato.fornecedor}</Box>
+      <Box component="td" sx={{ ...tableTdSx, fontSize: '0.78rem' }}>{contrato.empresa}</Box>
+      <Box component="td" sx={{ ...tableTdSx, whiteSpace: 'normal', maxWidth: 200 }}>
+        {contrato.objeto}
+      </Box>
+      <Box component="td" sx={tableTdSx}>
+        <Chip label={contrato.status} size="small" color={statusColor(contrato.status)} sx={{ fontWeight: 600 }} />
+      </Box>
+      <Box component="td" sx={tableTdSx}>
+        <Chip label={contrato.estrategia} size="small" variant="outlined" />
+      </Box>
+      <Box component="td" sx={{ ...tableTdSx, fontWeight: 600 }}>
+        {contrato.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+      </Box>
+      <Box component="td" sx={{ ...tableTdSx, minWidth: 120 }}>
+        <UtilizadoBar percentual={contrato.percentualUtilizado} />
+      </Box>
+      <Box component="td" sx={{ ...tableTdSx, color: 'text.secondary' }}>
+        {new Date(contrato.vencimento).toLocaleDateString('pt-BR')}
+      </Box>
+      <Box component="td" sx={tableTdSx}>{contrato.responsavel}</Box>
+    </Box>
+  );
+}
+
 export default function ContratosPage() {
-  const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [filtroStatus, setFiltroStatus] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
+  const [modoLista, setModoLista] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const showTable = !isTabletOrMobile || !modoLista;
+  const showList = isTabletOrMobile && modoLista;
 
   const filtrados = contratos.filter((c) => {
-    const matchStatus = !filtroStatus || c.status === filtroStatus;
-    const matchEmp = !filtroEmpresa || c.empresa.includes(filtroEmpresa);
+    const matchStatus = filtroStatus === 'Todos' || c.status === filtroStatus;
+    const matchEmp = !filtroEmpresa || c.empresa.toLowerCase().includes(filtroEmpresa.toLowerCase());
     return matchStatus && matchEmp;
   });
 
   const paginados = filtrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  const handleToggleCard = (id) => {
+    setExpandedId((current) => (current === id ? null : id));
+  };
+
   const totalFixo = contratos.reduce((s, c) => s + c.valorFixo, 0);
   const totalVariavel = contratos.reduce((s, c) => s + c.valorVariavel, 0);
-  const percMedio = Math.round(contratos.reduce((s, c) => s + c.percentualUtilizado, 0) / contratos.length);
 
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" fontWeight={700} color="primary.dark">Gestão de Contratos</Typography>
-        <Typography variant="body2" color="text.secondary">Acompanhe o status e saldo dos contratos Neoenergia Telecom</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Acompanhe o status e saldo dos contratos Neoenergia Telecom
+        </Typography>
       </Box>
 
       {/* KPIs */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard icon={<Description />} label="Contratos Ativos" value={271} sub="Em todas as empresas" color="primary" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard icon={<Warning />} label="Saldo Alto Consumo (>70%)" value={58} sub="Necessitam atenção" color="warning" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard icon={<AccessTime />} label="A Vencer (1–3 meses)" value={43} sub="Aguardam renovação" color="error" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard
-            icon={<AttachMoney />}
-            label="Valor Total Fixo"
-            value={`R$ ${(totalFixo / 1_000_000).toFixed(1)} Mi`}
-            sub={`Variável: R$ ${(totalVariavel / 1_000_000).toFixed(1)} Mi`}
-            color="secondary"
-          />
-        </Grid>
-      </Grid>
+      <Box sx={{ ...kpiGridSx, mb: 4 }}>
+        <KpiCard icon={<Description />} label="Contratos Ativos" value={271} sub="Em todas as empresas" color="primary" />
+        <KpiCard icon={<Warning />} label="Saldo Alto Consumo (>70%)" value={58} sub="Necessitam atenção" color="warning" />
+        <KpiCard icon={<AccessTime />} label="A Vencer (1–3 meses)" value={43} sub="Aguardam renovação" color="error" />
+        <KpiCard
+          icon={<AttachMoney />}
+          label="Valor Total Fixo"
+          value={`R$ ${(totalFixo / 1_000_000).toFixed(1)} Mi`}
+          sub={`Variável: R$ ${(totalVariavel / 1_000_000).toFixed(1)} Mi`}
+          color="secondary"
+        />
+      </Box>
 
-      {/* Gráficos */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>
-                Contratos por Status
-              </Typography>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={contratosPorStatus} layout="vertical" margin={{ left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                  <YAxis type="category" dataKey="status" tick={{ fontSize: 12 }} width={90} />
-                  <RechartTooltip />
-                  <Bar dataKey="quantidade" name="Qtd" fill="#00A443" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>
-                Vencimentos por Mês
-              </Typography>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={vencimentosPorMes} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E0EAE5" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <RechartTooltip />
-                  <Bar dataKey="quantidade" name="Contratos" fill="#E3850D" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* Gráficos — largura total */}
+      <Stack spacing={3} sx={{ mb: 4 }}>
+        <Card>
+          <CardContent sx={{ p: 3 }}>
+            <SectionTitle>Contratos por Status</SectionTitle>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={contratosPorStatus} layout="vertical" margin={{ left: 10, right: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E0EAE5" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="status" tick={{ fontSize: 12 }} width={90} />
+                <RechartTooltip />
+                <Bar dataKey="quantidade" name="Qtd" fill="#00A443" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      {/* Tabela de Contratos */}
+        <Card>
+          <CardContent sx={{ p: 3 }}>
+            <SectionTitle>Vencimentos por Mês</SectionTitle>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={vencimentosPorMes} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E0EAE5" />
+                <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <RechartTooltip />
+                <Bar dataKey="quantidade" name="Contratos" fill="#E3850D" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </Stack>
+
+      {/* Contratos detalhados */}
       <Card>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>
-            Contratos Detalhados
-          </Typography>
+          <SectionTitle>Contratos Detalhados</SectionTitle>
 
-          {/* Filtros da tabela */}
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Filtrar por Status"
-                select
-                size="small"
-                fullWidth
-                value={filtroStatus}
-                onChange={(e) => { setFiltroStatus(e.target.value); setPage(0); }}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                <MenuItem value="Ativo">Ativo</MenuItem>
-                <MenuItem value="Em Alerta">Em Alerta</MenuItem>
-                <MenuItem value="A Vencer">A Vencer</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Filtrar por Empresa"
-                size="small"
-                fullWidth
-                value={filtroEmpresa}
-                onChange={(e) => { setFiltroEmpresa(e.target.value); setPage(0); }}
-                placeholder="Digite o nome da empresa"
+          <Box sx={filterGridSx}>
+            <TextField
+              label="Filtrar por Status"
+              select
+              size="small"
+              fullWidth
+              value={filtroStatus}
+              onChange={(e) => { setFiltroStatus(e.target.value); setPage(0); }}
+            >
+              <MenuItem value="Todos">Todos</MenuItem>
+              <MenuItem value="Ativo">Ativo</MenuItem>
+              <MenuItem value="Em Alerta">Em Alerta</MenuItem>
+              <MenuItem value="A Vencer">A Vencer</MenuItem>
+            </TextField>
+            <TextField
+              label="Filtrar por Empresa"
+              size="small"
+              fullWidth
+              value={filtroEmpresa}
+              onChange={(e) => { setFiltroEmpresa(e.target.value); setPage(0); }}
+              placeholder="Digite o nome da empresa"
+            />
+          </Box>
+
+          {isTabletOrMobile && filtrados.length > 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={modoLista}
+                    onChange={(e) => {
+                      setModoLista(e.target.checked);
+                      setExpandedId(null);
+                    }}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2" fontWeight={600}>
+                    {modoLista ? 'Modo lista' : 'Modo tabela'}
+                  </Typography>
+                }
+                labelPlacement="end"
+                sx={{ m: 0 }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          )}
 
-          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  {['ID', 'Fornecedor', 'Empresa', 'Objeto', 'Status', 'Estratégia', 'Saldo Disp.', '% Utilizado', 'Vencimento', 'Responsável'].map((h) => (
-                    <TableCell key={h} sx={{ whiteSpace: 'nowrap' }}>{h}</TableCell>
+          {filtrados.length === 0 && (
+            <Typography align="center" sx={{ py: 4, color: 'text.secondary' }}>
+              Nenhum contrato encontrado.
+            </Typography>
+          )}
+
+          {filtrados.length > 0 && showList && (
+            <Stack spacing={1.5} sx={{ mb: 2 }}>
+              {paginados.map((c) => (
+                <ContratoListCard
+                  key={c.id}
+                  contrato={c}
+                  expanded={expandedId === c.id}
+                  onToggle={() => handleToggleCard(c.id)}
+                />
+              ))}
+            </Stack>
+          )}
+
+          {filtrados.length > 0 && showTable && (
+            <Box sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', mb: 1 }}>
+              <Box
+                component="table"
+                sx={{
+                  width: 'max-content',
+                  minWidth: '100%',
+                  borderCollapse: 'collapse',
+                }}
+              >
+                <Box component="thead">
+                  <Box component="tr">
+                    {TABLE_HEADERS.map((h) => (
+                      <Box component="th" key={h} sx={tableThSx}>{h}</Box>
+                    ))}
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {paginados.map((c, i) => (
+                    <ContratoTableRow key={c.id} contrato={c} index={i} />
                   ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginados.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                      Nenhum contrato encontrado.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginados.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell sx={{ fontWeight: 700, color: 'primary.dark', whiteSpace: 'nowrap' }}>{c.id}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{c.fornecedor}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{c.empresa}</TableCell>
-                      <TableCell sx={{ maxWidth: 180 }}>{c.objeto}</TableCell>
-                      <TableCell>
-                        <Chip label={c.status} size="small" color={statusColor(c.status)} sx={{ fontWeight: 600 }} />
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={c.estrategia} size="small" variant="outlined" />
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
-                        {c.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 110 }}>
-                        <Tooltip title={`${c.percentualUtilizado}% utilizado`}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={c.percentualUtilizado}
-                              sx={{
-                                flex: 1,
-                                height: 8,
-                                borderRadius: 4,
-                                bgcolor: '#DCEBE1',
-                                '& .MuiLinearProgress-bar': {
-                                  bgcolor: c.percentualUtilizado > 80 ? '#E3850D' : c.percentualUtilizado > 60 ? '#00A443' : '#26BF64',
-                                },
-                              }}
-                            />
-                            <Typography variant="caption" sx={{ whiteSpace: 'nowrap', fontWeight: 700, minWidth: 32 }}>
-                              {c.percentualUtilizado}%
-                            </Typography>
-                          </Box>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap', color: 'text.secondary', fontSize: '0.82rem' }}>
-                        {new Date(c.vencimento).toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap', fontSize: '0.82rem' }}>{c.responsavel}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </Box>
+              </Box>
+            </Box>
+          )}
 
-          <TablePagination
-            component="div"
-            count={filtrados.length}
-            page={page}
-            onPageChange={(_, p) => setPage(p)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-            rowsPerPageOptions={[5, 10, 25]}
-            labelRowsPerPage="Linhas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
-          />
+          {filtrados.length > 0 && (
+            <TablePagination
+              component="div"
+              count={filtrados.length}
+              page={page}
+              onPageChange={(_, p) => setPage(p)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage="Linhas por página:"
+              labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+            />
+          )}
         </CardContent>
       </Card>
     </Box>
