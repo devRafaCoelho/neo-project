@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
-  MenuItem, Button, Divider, Chip,
+  MenuItem, Button, Divider, Chip, FormControlLabel,
+  Switch, Stack, IconButton, Tooltip, Dialog, DialogTitle,
+  DialogContent, DialogActions, TablePagination, useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { Save, Cancel, InfoOutlined } from '@mui/icons-material';
+import {
+  Save, Cancel, InfoOutlined, Add, Visibility, Edit, Delete, Close,
+} from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -35,6 +40,89 @@ const formGridTripleSx = {
 
 const fullWidthField = { gridColumn: '1 / -1' };
 
+const pedidosMock = [
+  {
+    id: 'PED-001',
+    tipoPedido: 'servico-com-contrato',
+    assunto: 'Suporte NOC 24x7',
+    empresa: 'Neoenergia Coelba',
+    escopo: 'Operação e monitoramento de rede',
+    fornecedor: 'JR Teletrica',
+    cnpjFornecedor: '12.345.678/0001-01',
+    tipoPagamento: 'OPEX',
+    valor: 145000,
+    conta: '230L',
+    solicitante: 'Rafael Coelho',
+    departamento: 'Telecom',
+    status: 'Pendente',
+    data: '2026-05-21',
+  },
+  {
+    id: 'PED-002',
+    tipoPedido: 'material-sem-contrato',
+    assunto: 'Aquisição de switches L2',
+    empresa: 'Neoenergia Elektro',
+    escopo: 'Compra para expansão de backbone',
+    fornecedor: 'Mgitech',
+    cnpjFornecedor: '34.567.890/0001-03',
+    tipoPagamento: 'CAPEX',
+    valor: 98000,
+    conta: '220M',
+    solicitante: 'Ana Souza',
+    departamento: 'Engenharia',
+    status: 'Aprovado',
+    data: '2026-05-18',
+  },
+  {
+    id: 'PED-003',
+    tipoPedido: 'servico-sem-contrato',
+    assunto: 'Instalação de fibra em site crítico',
+    empresa: 'Neoenergia Pernambuco',
+    escopo: 'Atendimento emergencial',
+    fornecedor: 'Telespazio',
+    cnpjFornecedor: '23.456.789/0001-02',
+    tipoPagamento: 'OPEX',
+    valor: 56000,
+    conta: '230D',
+    solicitante: 'João Ferreira',
+    departamento: 'Operações',
+    status: 'Em análise',
+    data: '2026-05-15',
+  },
+  {
+    id: 'PED-004',
+    tipoPedido: 'material-com-contrato',
+    assunto: 'Rádios para enlace redundante',
+    empresa: 'Neoenergia Coelba',
+    escopo: 'Atualização de enlaces de rádio',
+    fornecedor: 'Ericsson',
+    cnpjFornecedor: '56.789.012/0001-05',
+    tipoPagamento: 'CAPEX',
+    valor: 320000,
+    conta: '2393',
+    solicitante: 'Pedro Alves',
+    departamento: 'Infraestrutura',
+    status: 'Pendente',
+    data: '2026-05-10',
+  },
+  {
+    id: 'PED-005',
+    tipoPedido: 'servico-com-contrato',
+    assunto: 'Gestão de chips IoT',
+    empresa: 'Neoenergia Pernambuco',
+    escopo: 'Operação contínua de conectividade IoT',
+    fornecedor: 'Mgitech',
+    cnpjFornecedor: '34.567.890/0001-03',
+    tipoPagamento: 'OPEX',
+    valor: 74000,
+    conta: '230L',
+    solicitante: 'Luciana Ramos',
+    departamento: 'Telecom',
+    status: 'Aprovado',
+    data: '2026-05-08',
+  },
+];
+
 const schema = yup.object({
   tipoPedido: yup.string().required('Tipo de pedido obrigatório'),
   assunto: yup.string().required('Assunto obrigatório').min(5, 'Mínimo 5 caracteres'),
@@ -60,7 +148,18 @@ const schema = yup.object({
 });
 
 export default function PedidoPage() {
+  const theme = useTheme();
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { enqueueSnackbar } = useSnackbar();
+  const [pedidos] = useState(pedidosMock);
+  const [showForm, setShowForm] = useState(false);
+  const [pedidoEmEdicao, setPedidoEmEdicao] = useState(null);
+  const [pedidoVisualizacao, setPedidoVisualizacao] = useState(null);
+  const [pedidoExclusao, setPedidoExclusao] = useState(null);
+  const [modoLista, setModoLista] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [listVisibleCount, setListVisibleCount] = useState(3);
   const [tipoPedido, setTipoPedido] = useState('');
   const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
   const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
@@ -78,6 +177,12 @@ export default function PedidoPage() {
     reset,
     formState: { errors },
   } = useForm({ resolver: yupResolver(schema) });
+
+  const showTable = !isTabletOrMobile || !modoLista;
+  const showList = isTabletOrMobile && modoLista;
+  const pedidosPaginados = pedidos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const pedidosLista = pedidos.slice(0, listVisibleCount);
+  const hasMoreListItems = listVisibleCount < pedidos.length;
 
   const handleFornecedorChange = (e, field) => {
     field.onChange(e);
@@ -108,13 +213,80 @@ export default function PedidoPage() {
     setContratoSelecionado(cont);
   };
 
+  const abrirNovoPedido = () => {
+    reset();
+    setPedidoEmEdicao(null);
+    setTipoPedido('');
+    setFornecedorSelecionado(null);
+    setEmpresaSelecionada(null);
+    setContratosSelecionaveis([]);
+    setContratoSelecionado(null);
+    setShowForm(true);
+  };
+
+  const abrirEdicaoPedido = (pedido) => {
+    reset({
+      tipoPedido: pedido.tipoPedido,
+      assunto: pedido.assunto,
+      empresa: pedido.empresa,
+      escopo: pedido.escopo,
+      fornecedor: pedido.fornecedor,
+      cnpjFornecedor: pedido.cnpjFornecedor,
+      tipoPagamento: pedido.tipoPagamento,
+      valor: pedido.valor,
+      conta: pedido.conta,
+      solicitante: pedido.solicitante,
+      departamento: pedido.departamento,
+      justificativaDesvio: '',
+      ncm: '',
+      codigoSap: '',
+      descricaoItem: '',
+      diagrama: '',
+      atividade: '',
+      descricaoAtividade: '',
+      classeCusto: '',
+    });
+    setPedidoEmEdicao(pedido);
+    setTipoPedido(pedido.tipoPedido);
+    const emp = empresas.find((x) => x.nome === pedido.empresa) || null;
+    const forn = fornecedores.find((x) => x.nome === pedido.fornecedor) || null;
+    setEmpresaSelecionada(emp);
+    setFornecedorSelecionado(forn);
+    filterContratos(pedido.empresa, pedido.fornecedor);
+    setContratoSelecionado(null);
+    setShowForm(true);
+  };
+
+  const abrirVisualizacaoPedido = (pedido) => {
+    setPedidoVisualizacao(pedido);
+  };
+
+  const confirmarExclusaoPedido = (pedido) => {
+    setPedidoExclusao(pedido);
+  };
+
+  const executarExclusaoSimulada = () => {
+    enqueueSnackbar(`Pedido ${pedidoExclusao?.id} excluído com sucesso!`, {
+      variant: 'success',
+      autoHideDuration: 3500,
+    });
+    setPedidoExclusao(null);
+  };
+
   const onSubmit = async () => {
     await new Promise((r) => setTimeout(r, 700));
-    enqueueSnackbar('Pedido criado com sucesso! Aprovador notificado.', {
+    enqueueSnackbar(
+      pedidoEmEdicao
+        ? `Pedido ${pedidoEmEdicao.id} atualizado com sucesso!`
+        : 'Pedido criado com sucesso! Aprovador notificado.',
+      {
       variant: 'success',
       autoHideDuration: 5000,
-    });
+      },
+    );
     reset();
+    setShowForm(false);
+    setPedidoEmEdicao(null);
     setTipoPedido('');
     setFornecedorSelecionado(null);
     setEmpresaSelecionada(null);
@@ -124,6 +296,8 @@ export default function PedidoPage() {
 
   const handleCancelar = () => {
     reset();
+    setShowForm(false);
+    setPedidoEmEdicao(null);
     setTipoPedido('');
     setFornecedorSelecionado(null);
     setEmpresaSelecionada(null);
@@ -134,13 +308,244 @@ export default function PedidoPage() {
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700} color="primary.dark">Criação de Pedido</Typography>
-        <Typography variant="body2" color="text.secondary">Crie pedidos de serviço ou material com ou sem contrato</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+          <Box>
+            <Typography variant="h4" fontWeight={700} color="primary.dark">Criação de Pedido</Typography>
+            <Typography variant="body2" color="text.secondary">Crie pedidos de serviço ou material com ou sem contrato</Typography>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={!isTabletOrMobile ? <Add /> : undefined}
+            onClick={abrirNovoPedido}
+            sx={{
+              minWidth: { xs: 48, lg: 'auto' },
+              width: { xs: 48, lg: 'auto' },
+              height: { xs: 48, lg: 42 },
+              px: { xs: 0, lg: 2.25 },
+              borderRadius: { xs: '50%', lg: 1 },
+            }}
+          >
+            {isTabletOrMobile ? <Add /> : 'Cadastrar novo pedido'}
+          </Button>
+        </Box>
       </Box>
 
       <Card>
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>
+            Pedidos Cadastrados
+          </Typography>
+
+          {isTabletOrMobile && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', mb: 2 }}>
+              <FormControlLabel
+                control={<Switch checked={modoLista} onChange={(e) => setModoLista(e.target.checked)} color="primary" />}
+                label={<Typography variant="body2" fontWeight={600}>{modoLista ? 'Modo lista' : 'Modo tabela'}</Typography>}
+                labelPlacement="end"
+                sx={{ m: 0 }}
+              />
+            </Box>
+          )}
+
+          {showList && (
+            <Stack spacing={1.5} sx={{ mb: 2 }}>
+              {pedidosLista.map((p) => (
+                <Card key={p.id} variant="outlined" sx={{ borderColor: 'divider' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700} color="primary.dark">{p.id}</Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title="Visualizar pedido">
+                          <IconButton size="small" onClick={() => abrirVisualizacaoPedido(p)}>
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Editar pedido">
+                          <IconButton size="small" onClick={() => abrirEdicaoPedido(p)}>
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir pedido">
+                          <IconButton size="small" color="error" onClick={() => confirmarExclusaoPedido(p)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{p.assunto}</Typography>
+                    <Typography variant="caption" color="text.secondary">{p.empresa} — {p.fornecedor}</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.25 }}>
+                      <Chip size="small" label={p.tipoPagamento} color={p.tipoPagamento === 'CAPEX' ? 'secondary' : 'primary'} />
+                      <Chip size="small" label={p.status} variant="outlined" />
+                      <Chip size="small" label={p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+              {hasMoreListItems && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', pt: 0.5 }}>
+                  <Button
+                    variant="text"
+                    onClick={() => setListVisibleCount((current) => Math.min(current + 3, pedidos.length))}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Mostrar mais
+                  </Button>
+                </Box>
+              )}
+            </Stack>
+          )}
+
+          {showTable && (
+            <Box sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', mb: 1 }}>
+              <Box component="table" sx={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
+                <Box component="thead">
+                  <Box component="tr">
+                    {['ID', 'Assunto', 'Empresa', 'Fornecedor', 'Valor', 'Status', 'Ações'].map((h) => (
+                      <Box
+                        component="th"
+                        key={h}
+                        sx={{
+                          p: '12px 16px',
+                          textAlign: 'left',
+                          bgcolor: 'primary.dark',
+                          color: 'white',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {h}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {pedidosPaginados.map((p, i) => (
+                    <Box
+                      component="tr"
+                      key={p.id}
+                      sx={{ bgcolor: i % 2 === 0 ? 'white' : '#F0F7F3', '&:hover': { bgcolor: '#DCEBE1' } }}
+                    >
+                      <Box component="td" sx={{ p: '10px 16px', fontWeight: 700, color: 'primary.dark', whiteSpace: 'nowrap' }}>{p.id}</Box>
+                      <Box component="td" sx={{ p: '10px 16px', minWidth: 220 }}>{p.assunto}</Box>
+                      <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap' }}>{p.empresa}</Box>
+                      <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap' }}>{p.fornecedor}</Box>
+                      <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                        {p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </Box>
+                      <Box component="td" sx={{ p: '10px 16px' }}>
+                        <Chip size="small" label={p.status} variant="outlined" />
+                      </Box>
+                      <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap' }}>
+                        <Tooltip title="Visualizar pedido">
+                          <IconButton size="small" onClick={() => abrirVisualizacaoPedido(p)}>
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Editar pedido">
+                          <IconButton size="small" onClick={() => abrirEdicaoPedido(p)}>
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir pedido">
+                          <IconButton size="small" color="error" onClick={() => confirmarExclusaoPedido(p)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {showTable && (
+            <TablePagination
+              component="div"
+              count={pedidos.length}
+              page={page}
+              onPageChange={(_, p) => setPage(p)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage="Linhas por página:"
+              labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+              sx={{
+                '& .MuiTablePagination-toolbar': {
+                  px: { xs: 1, sm: 2 },
+                  display: { xs: 'grid', sm: 'flex' },
+                  gridTemplateColumns: { xs: 'auto auto 1fr', sm: 'none' },
+                  gridTemplateAreas: {
+                    xs: '"label input rows" "actions actions actions"',
+                    sm: 'none',
+                  },
+                  alignItems: 'center',
+                  columnGap: { xs: 1, sm: 0 },
+                  rowGap: { xs: 0.75, sm: 0 },
+                },
+                '& .MuiTablePagination-spacer': {
+                  display: { xs: 'none', sm: 'block' },
+                },
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  margin: 0,
+                },
+                '& .MuiTablePagination-selectLabel': {
+                  gridArea: { xs: 'label', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-input': {
+                  gridArea: { xs: 'input', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-displayedRows': {
+                  gridArea: { xs: 'rows', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-actions': {
+                  gridArea: { xs: 'actions', sm: 'auto' },
+                  justifySelf: { xs: 'end', sm: 'auto' },
+                },
+                '& .MuiTablePagination-actions .MuiIconButton-root': {
+                  color: 'text.secondary',
+                },
+                '& .MuiTablePagination-actions .MuiIconButton-root.Mui-disabled': {
+                  color: 'text.disabled',
+                  opacity: 0.75,
+                },
+              }}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {showForm && (
+        <Dialog
+          open={showForm}
+          onClose={handleCancelar}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+            }}
+          >
+            {pedidoEmEdicao ? `Editar Pedido ${pedidoEmEdicao.id}` : 'Novo Pedido'}
+            <IconButton size="small" onClick={handleCancelar} aria-label="Fechar formulário">
+              <Close fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ p: { xs: 2, sm: 3 } }}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
 
             <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>Tipo de Pedido</Typography>
             <Box
@@ -441,12 +846,60 @@ export default function PedidoPage() {
                 Cancelar
               </Button>
               <Button type="submit" variant="contained" startIcon={<Save />}>
-                Salvar Pedido
+                {pedidoEmEdicao ? 'Salvar Alterações' : 'Salvar Pedido'}
               </Button>
             </Box>
-          </Box>
-        </CardContent>
-      </Card>
+            </Box>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <Dialog open={!!pedidoVisualizacao} onClose={() => setPedidoVisualizacao(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Resumo do Pedido</DialogTitle>
+        <DialogContent dividers>
+          {pedidoVisualizacao && (
+            <Stack spacing={1.25}>
+              <Typography variant="body2"><strong>ID:</strong> {pedidoVisualizacao.id}</Typography>
+              <Typography variant="body2"><strong>Assunto:</strong> {pedidoVisualizacao.assunto}</Typography>
+              <Typography variant="body2"><strong>Tipo:</strong> {tiposPedido.find((t) => t.value === pedidoVisualizacao.tipoPedido)?.label || pedidoVisualizacao.tipoPedido}</Typography>
+              <Typography variant="body2"><strong>Empresa:</strong> {pedidoVisualizacao.empresa}</Typography>
+              <Typography variant="body2"><strong>Fornecedor:</strong> {pedidoVisualizacao.fornecedor}</Typography>
+              <Typography variant="body2"><strong>Valor:</strong> {pedidoVisualizacao.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography>
+              <Typography variant="body2"><strong>Status:</strong> {pedidoVisualizacao.status}</Typography>
+              <Typography variant="body2"><strong>Data:</strong> {new Date(pedidoVisualizacao.data).toLocaleDateString('pt-BR')}</Typography>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outlined" onClick={() => setPedidoVisualizacao(null)}>Fechar</Button>
+          <Button
+            variant="contained"
+            startIcon={<Edit />}
+            onClick={() => {
+              const pedido = pedidoVisualizacao;
+              setPedidoVisualizacao(null);
+              abrirEdicaoPedido(pedido);
+            }}
+          >
+            Editar pedido
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!pedidoExclusao} onClose={() => setPedidoExclusao(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Excluir pedido</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Confirma a exclusão do pedido <strong>{pedidoExclusao?.id}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outlined" onClick={() => setPedidoExclusao(null)}>Cancelar</Button>
+          <Button color="error" variant="contained" onClick={executarExclusaoSimulada}>
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
