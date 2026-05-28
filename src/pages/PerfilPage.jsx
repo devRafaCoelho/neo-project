@@ -67,7 +67,7 @@ export default function PerfilPage() {
     setEditando(false);
   };
 
-  const handleAlterarSenha = async (data) => {
+  const handleAlterarSenha = async () => {
     await new Promise((r) => setTimeout(r, 700));
     enqueueSnackbar("Senha alterada com sucesso!", {
       variant: "success",
@@ -153,7 +153,7 @@ export default function PerfilPage() {
                   <Box key={label}>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
+                      sx={{ color: "#5E6871" }}
                       fontWeight={600}
                     >
                       {label}
@@ -185,8 +185,10 @@ export default function PerfilPage() {
               <Box
                 sx={{
                   display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
                   justifyContent: "space-between",
-                  alignItems: "center",
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  gap: { xs: 1.5, sm: 0 },
                   mb: 3,
                 }}
               >
@@ -199,11 +201,25 @@ export default function PerfilPage() {
                     startIcon={<Edit />}
                     onClick={() => setEditando(true)}
                     size="small"
+                    sx={{ alignSelf: { xs: "stretch", sm: "auto" }, whiteSpace: "nowrap" }}
                   >
                     Editar
                   </Button>
                 ) : (
-                  <Box sx={{ display: "flex", gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 1,
+                      width: { xs: "100%", sm: "auto" },
+                      flexWrap: "nowrap",
+                      justifyContent: { xs: "space-between", sm: "flex-start" },
+                      "& .MuiButton-root": {
+                        whiteSpace: "nowrap",
+                        minHeight: 36,
+                        flex: { xs: 1, sm: "initial" },
+                      },
+                    }}
+                  >
                     <Button
                       variant="outlined"
                       color="error"
@@ -365,12 +381,13 @@ export default function PerfilPage() {
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1, flexWrap: "nowrap" }}>
           <Button
             variant="outlined"
             color="error"
             onClick={handleCancelarSenha}
             fullWidth
+            sx={{ whiteSpace: "nowrap", minHeight: 44 }}
           >
             Cancelar
           </Button>
@@ -378,8 +395,9 @@ export default function PerfilPage() {
             variant="contained"
             onClick={handleSubmit(handleAlterarSenha)}
             fullWidth
+            sx={{ whiteSpace: "nowrap", minHeight: 44 }}
           >
-            Alterar Senha
+            Salvar Senha
           </Button>
         </DialogActions>
       </Dialog>
