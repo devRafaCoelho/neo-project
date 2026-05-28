@@ -77,13 +77,17 @@ export default function GestaoSapPage() {
   const [modoLista, setModoLista] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [listVisibleCount, setListVisibleCount] = useState(3);
 
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
-  const resultadosTabela = (resultados ?? []).slice(
+  const lista = resultados ?? [];
+  const resultadosTabela = lista.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+  const resultadosLista = lista.slice(0, listVisibleCount);
+  const hasMoreListItems = listVisibleCount < lista.length;
 
   const handleBuscar = () => {
     const res = codigosMock.filter((c) => {
@@ -97,6 +101,7 @@ export default function GestaoSapPage() {
     });
     setResultados(res);
     setPage(0);
+    setListVisibleCount(3);
   };
 
   const handleLimparFiltros = () => {
@@ -104,6 +109,7 @@ export default function GestaoSapPage() {
     setEmpresa('Todas');
     setBusca('');
     setResultados(null);
+    setListVisibleCount(3);
   };
 
   return (
@@ -199,7 +205,11 @@ export default function GestaoSapPage() {
                   control={
                     <Switch
                       checked={modoLista}
-                      onChange={(e) => setModoLista(e.target.checked)}
+                      onChange={(e) => {
+                        setModoLista(e.target.checked);
+                        setPage(0);
+                        setListVisibleCount(3);
+                      }}
                       color="primary"
                     />
                   }
@@ -220,7 +230,7 @@ export default function GestaoSapPage() {
 
             {resultados.length > 0 && showList && (
               <Stack spacing={1.5}>
-                {resultados.map((r) => (
+                {resultadosLista.map((r) => (
                   <Box
                     key={r.codigo}
                     sx={{
@@ -249,6 +259,21 @@ export default function GestaoSapPage() {
                     </Box>
                   </Box>
                 ))}
+                {hasMoreListItems && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', pt: 0.5 }}>
+                    <Button
+                      variant="text"
+                      onClick={() =>
+                        setListVisibleCount((current) =>
+                          Math.min(current + 3, lista.length)
+                        )
+                      }
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Mostrar mais
+                    </Button>
+                  </Box>
+                )}
               </Stack>
             )}
 
@@ -328,6 +353,51 @@ export default function GestaoSapPage() {
                   rowsPerPageOptions={[5, 10, 25]}
                   labelRowsPerPage="Linhas por página:"
                   labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+                  sx={{
+                    '& .MuiTablePagination-toolbar': {
+                      px: { xs: 1, sm: 2 },
+                      display: { xs: 'grid', sm: 'flex' },
+                      gridTemplateColumns: { xs: 'auto auto 1fr auto', sm: 'none' },
+                      gridTemplateAreas: {
+                        xs: '"label input . rows" ". . . actions"',
+                        sm: 'none',
+                      },
+                      alignItems: 'center',
+                      columnGap: { xs: 1, sm: 0 },
+                      rowGap: { xs: 0.75, sm: 0 },
+                    },
+                    '& .MuiTablePagination-spacer': {
+                      display: { xs: 'none', sm: 'block' },
+                    },
+                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                      margin: 0,
+                    },
+                    '& .MuiTablePagination-selectLabel': {
+                      gridArea: { xs: 'label', sm: 'auto' },
+                      justifySelf: { xs: 'start', sm: 'auto' },
+                    },
+                    '& .MuiTablePagination-input': {
+                      gridArea: { xs: 'input', sm: 'auto' },
+                      justifySelf: { xs: 'start', sm: 'auto' },
+                    },
+                    '& .MuiTablePagination-displayedRows': {
+                      gridArea: { xs: 'rows', sm: 'auto' },
+                      justifySelf: { xs: 'center', sm: 'auto' },
+                      textAlign: { xs: 'center', sm: 'inherit' },
+                    },
+                    '& .MuiTablePagination-actions': {
+                      gridArea: { xs: 'actions', sm: 'auto' },
+                      justifySelf: { xs: 'center', sm: 'auto' },
+                      marginLeft: { xs: 0, sm: 'auto' },
+                    },
+                    '& .MuiTablePagination-actions .MuiIconButton-root': {
+                      color: 'text.secondary',
+                    },
+                    '& .MuiTablePagination-actions .MuiIconButton-root.Mui-disabled': {
+                      color: 'text.disabled',
+                      opacity: 0.75,
+                    },
+                  }}
                 />
               </>
             )}
