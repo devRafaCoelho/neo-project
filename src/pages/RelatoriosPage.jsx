@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
   MenuItem, Button, Chip, Collapse, FormControlLabel,
@@ -12,6 +12,32 @@ import dayjs from '../utils/dayjsPtBr';
 import { periodoNoIntervalo } from '../utils/periodo';
 import { empresas } from '../data/mockData';
 import MonthPickerField from '../components/form/MonthPickerField';
+import { SortableTableHeadCell } from '../components/table/SortableTableHeadCell';
+import { useTableSort } from '../hooks/useTableSort';
+
+const RELATORIO_SORT_COLUMNS = {
+  id: { type: 'string' },
+  empresa: { type: 'string' },
+  fornecedor: { type: 'string' },
+  tipo: { type: 'string' },
+  conta: { type: 'string' },
+  mes: { type: 'string' },
+  valor: { type: 'number' },
+  desvio: { type: 'number' },
+  status: { type: 'string' },
+};
+
+const RELATORIO_TABLE_COLUMNS = [
+  { id: 'id', label: 'ID' },
+  { id: 'empresa', label: 'Empresa' },
+  { id: 'fornecedor', label: 'Fornecedor' },
+  { id: 'tipo', label: 'Tipo' },
+  { id: 'conta', label: 'Conta' },
+  { id: 'mes', label: 'Mês' },
+  { id: 'valor', label: 'Valor (R$)' },
+  { id: 'desvio', label: 'Desvio (R$)' },
+  { id: 'status', label: 'Status' },
+];
 
 const tiposRelatorio = ['OPEX', 'CAPEX', 'IFRS16'];
 const statusOptions = ['Todos', 'Aprovada', 'Pendente', 'Rejeitada'];
@@ -48,17 +74,6 @@ function filtrarRelatorios({ tipo, empresa, status, mesInicio, mesFim }) {
     return true;
   });
 }
-
-const tableThSx = {
-  p: '12px 16px',
-  textAlign: 'left',
-  bgcolor: 'primary.dark',
-  color: 'white',
-  fontSize: '0.8rem',
-  fontWeight: 700,
-  borderRadius: 0,
-  whiteSpace: 'nowrap',
-};
 
 const tableTdSx = {
   p: '10px 16px',
@@ -208,10 +223,6 @@ function RelatorioListCard({ row, expanded, onToggle }) {
   );
 }
 
-const TABLE_HEADERS = [
-  'ID', 'Empresa', 'Fornecedor', 'Tipo', 'Conta', 'Mês', 'Valor (R$)', 'Desvio (R$)', 'Status',
-];
-
 export default function RelatoriosPage() {
   const theme = useTheme();
   const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -230,7 +241,13 @@ export default function RelatoriosPage() {
 
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
-  const tableRows = (dados ?? []).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const resetPage = useCallback(() => setPage(0), []);
+  const { sortedRows: dadosOrdenados, orderBy, order, requestSort } = useTableSort(
+    dados ?? [],
+    RELATORIO_SORT_COLUMNS,
+    { onSortChange: resetPage },
+  );
+  const tableRows = dadosOrdenados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const listRows = (dados ?? []).slice(0, listVisibleCount);
   const hasMoreListItems = (dados?.length ?? 0) > listVisibleCount;
 
@@ -470,10 +487,15 @@ export default function RelatoriosPage() {
                 >
                   <Box component="thead">
                     <Box component="tr">
-                      {TABLE_HEADERS.map((h) => (
-                        <Box component="th" key={h} sx={tableThSx}>
-                          {h}
-                        </Box>
+                      {RELATORIO_TABLE_COLUMNS.map((col) => (
+                        <SortableTableHeadCell
+                          key={col.id}
+                          columnId={col.id}
+                          label={col.label}
+                          active={orderBy === col.id}
+                          direction={order}
+                          onSort={requestSort}
+                        />
                       ))}
                     </Box>
                   </Box>

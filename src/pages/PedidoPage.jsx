@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
   MenuItem, Button, Divider, Chip, FormControlLabel,
@@ -17,6 +17,27 @@ import { empresas, fornecedores, contasContabeis, tiposPedido, contratos } from 
 import CurrencyTextField from '../components/form/CurrencyTextField';
 import CnpjTextField from '../components/form/CnpjTextField';
 import { digitsOnlyCnpj } from '../utils/cnpj';
+import { SortableTableHeadCell } from '../components/table/SortableTableHeadCell';
+import { useTableSort } from '../hooks/useTableSort';
+
+const PEDIDO_SORT_COLUMNS = {
+  id: { type: 'string' },
+  assunto: { type: 'string' },
+  empresa: { type: 'string' },
+  fornecedor: { type: 'string' },
+  valor: { type: 'number' },
+  status: { type: 'string' },
+};
+
+const PEDIDO_TABLE_COLUMNS = [
+  { id: 'id', label: 'ID' },
+  { id: 'assunto', label: 'Assunto' },
+  { id: 'empresa', label: 'Empresa' },
+  { id: 'fornecedor', label: 'Fornecedor' },
+  { id: 'valor', label: 'Valor' },
+  { id: 'status', label: 'Status' },
+  { id: 'acoes', label: 'Ações', sortable: false },
+];
 
 const formGridSx = {
   display: 'grid',
@@ -181,7 +202,13 @@ export default function PedidoPage() {
 
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
-  const pedidosPaginados = pedidos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const resetPage = useCallback(() => setPage(0), []);
+  const { sortedRows: pedidosOrdenados, orderBy, order, requestSort } = useTableSort(
+    pedidos,
+    PEDIDO_SORT_COLUMNS,
+    { onSortChange: resetPage },
+  );
+  const pedidosPaginados = pedidosOrdenados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const pedidosLista = pedidos.slice(0, listVisibleCount);
   const hasMoreListItems = listVisibleCount < pedidos.length;
 
@@ -406,22 +433,16 @@ export default function PedidoPage() {
               <Box component="table" sx={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
                 <Box component="thead">
                   <Box component="tr">
-                    {['ID', 'Assunto', 'Empresa', 'Fornecedor', 'Valor', 'Status', 'Ações'].map((h) => (
-                      <Box
-                        component="th"
-                        key={h}
-                        sx={{
-                          p: '12px 16px',
-                          textAlign: 'left',
-                          bgcolor: 'primary.dark',
-                          color: 'white',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {h}
-                      </Box>
+                    {PEDIDO_TABLE_COLUMNS.map((col) => (
+                      <SortableTableHeadCell
+                        key={col.id}
+                        columnId={col.id}
+                        label={col.label}
+                        sortable={col.sortable !== false}
+                        active={orderBy === col.id}
+                        direction={order}
+                        onSort={requestSort}
+                      />
                     ))}
                   </Box>
                 </Box>

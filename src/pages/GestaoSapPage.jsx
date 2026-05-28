@@ -15,7 +15,25 @@ import {
   useTheme,
 } from '@mui/material';
 import { Search, SearchOff } from '@mui/icons-material';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { SortableTableHeadCell } from '../components/table/SortableTableHeadCell';
+import { useTableSort } from '../hooks/useTableSort';
+
+const SAP_SORT_COLUMNS = {
+  codigo: { type: 'string' },
+  descricao: { type: 'string' },
+  tipo: { type: 'string' },
+  empresa: { type: 'string' },
+  transacao: { type: 'string' },
+};
+
+const SAP_TABLE_COLUMNS = [
+  { id: 'codigo', label: 'Código' },
+  { id: 'descricao', label: 'Descrição' },
+  { id: 'tipo', label: 'Tipo' },
+  { id: 'empresa', label: 'Distribuidora' },
+  { id: 'transacao', label: 'Transação' },
+];
 
 const tiposCodigo = ['Material / Telecom', 'Serviço'];
 const distribuidoras = [
@@ -82,7 +100,13 @@ export default function GestaoSapPage() {
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
   const lista = resultados ?? [];
-  const resultadosTabela = lista.slice(
+  const resetPage = useCallback(() => setPage(0), []);
+  const { sortedRows: listaOrdenada, orderBy, order, requestSort } = useTableSort(
+    lista,
+    SAP_SORT_COLUMNS,
+    { onSortChange: resetPage },
+  );
+  const resultadosTabela = listaOrdenada.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
@@ -291,22 +315,15 @@ export default function GestaoSapPage() {
                   >
                     <Box component="thead">
                       <Box component="tr">
-                        {['Código', 'Descrição', 'Tipo', 'Distribuidora', 'Transação'].map((h) => (
-                          <Box
-                            component="th"
-                            key={h}
-                            sx={{
-                              p: '12px 16px',
-                              textAlign: 'left',
-                              bgcolor: 'primary.dark',
-                              color: 'white',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {h}
-                          </Box>
+                        {SAP_TABLE_COLUMNS.map((col) => (
+                          <SortableTableHeadCell
+                            key={col.id}
+                            columnId={col.id}
+                            label={col.label}
+                            active={orderBy === col.id}
+                            direction={order}
+                            onSort={requestSort}
+                          />
                         ))}
                       </Box>
                     </Box>

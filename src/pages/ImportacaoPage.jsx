@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, MenuItem, TextField,
   Button, Chip, Table, TableBody, TableCell, TableContainer,
@@ -8,6 +8,28 @@ import { CloudUpload, CheckCircle, Cancel } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { useSnackbar } from 'notistack';
 import { importacaoPreview } from '../data/mockData';
+import { SortableMuiHeadCell } from '../components/table/SortableTableHeadCell';
+import { useTableSort } from '../hooks/useTableSort';
+
+const IMPORT_SORT_COLUMNS = {
+  fornecedor: { type: 'string' },
+  servico: { type: 'string' },
+  ppto26: { type: 'number' },
+  rev1: { type: 'number' },
+  real: { type: 'number' },
+  desvio: { type: 'number' },
+  justificativa: { type: 'string' },
+};
+
+const IMPORT_TABLE_COLUMNS = [
+  { id: 'fornecedor', label: 'Fornecedor' },
+  { id: 'servico', label: 'Serviço' },
+  { id: 'ppto26', label: 'PPTO26 (R$K)' },
+  { id: 'rev1', label: 'REV1 (R$K)' },
+  { id: 'real', label: 'Real (R$K)' },
+  { id: 'desvio', label: 'Desvio (R$K)' },
+  { id: 'justificativa', label: 'Justificativa' },
+];
 
 const tipos = ['OPEX', 'CAPEX', 'IFRS16'];
 
@@ -22,6 +44,11 @@ export default function ImportacaoPage() {
   const [file, setFile] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  const { sortedRows: previewOrdenado, orderBy, order, requestSort } = useTableSort(
+    previewData ?? [],
+    IMPORT_SORT_COLUMNS,
+  );
 
   const onDrop = useCallback((accepted) => {
     if (accepted.length > 0) {
@@ -162,13 +189,20 @@ export default function ImportacaoPage() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    {['Fornecedor', 'Serviço', 'PPTO26 (R$K)', 'REV1 (R$K)', 'Real (R$K)', 'Desvio (R$K)', 'Justificativa'].map((h) => (
-                      <TableCell key={h}>{h}</TableCell>
+                    {IMPORT_TABLE_COLUMNS.map((col) => (
+                      <SortableMuiHeadCell
+                        key={col.id}
+                        columnId={col.id}
+                        label={col.label}
+                        active={orderBy === col.id}
+                        direction={order}
+                        onSort={requestSort}
+                      />
                     ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {previewData.map((row, i) => (
+                  {previewOrdenado.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell sx={{ fontWeight: 600 }}>{row.fornecedor}</TableCell>
                       <TableCell>{row.servico}</TableCell>

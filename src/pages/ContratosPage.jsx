@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
   MenuItem, Chip, Collapse, FormControlLabel,
@@ -14,6 +14,34 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { contratos, contratosPorStatus, vencimentosPorMes } from '../data/mockData';
+import { SortableTableHeadCell } from '../components/table/SortableTableHeadCell';
+import { useTableSort } from '../hooks/useTableSort';
+
+const CONTRATO_SORT_COLUMNS = {
+  id: { type: 'string' },
+  fornecedor: { type: 'string' },
+  empresa: { type: 'string' },
+  objeto: { type: 'string' },
+  status: { type: 'string' },
+  estrategia: { type: 'string' },
+  saldo: { type: 'number' },
+  percentualUtilizado: { type: 'number' },
+  vencimento: { type: 'date' },
+  responsavel: { type: 'string' },
+};
+
+const CONTRATO_TABLE_COLUMNS = [
+  { id: 'id', label: 'ID' },
+  { id: 'fornecedor', label: 'Fornecedor' },
+  { id: 'empresa', label: 'Empresa' },
+  { id: 'objeto', label: 'Objeto' },
+  { id: 'status', label: 'Status' },
+  { id: 'estrategia', label: 'Estratégia' },
+  { id: 'saldo', label: 'Saldo Disp.' },
+  { id: 'percentualUtilizado', label: '% Utilizado' },
+  { id: 'vencimento', label: 'Vencimento' },
+  { id: 'responsavel', label: 'Responsável' },
+];
 
 const kpiGridSx = {
   display: 'grid',
@@ -33,21 +61,6 @@ const filterGridSx = {
     xs: '1fr',
     sm: 'repeat(2, minmax(0, 1fr))',
   },
-};
-
-const TABLE_HEADERS = [
-  'ID', 'Fornecedor', 'Empresa', 'Objeto', 'Status', 'Estratégia',
-  'Saldo Disp.', '% Utilizado', 'Vencimento', 'Responsável',
-];
-
-const tableThSx = {
-  p: '12px 16px',
-  textAlign: 'left',
-  bgcolor: 'primary.dark',
-  color: 'white',
-  fontSize: '0.8rem',
-  fontWeight: 700,
-  whiteSpace: 'nowrap',
 };
 
 const tableTdSx = {
@@ -264,7 +277,14 @@ export default function ContratosPage() {
     return matchStatus && matchEmp;
   });
 
-  const paginados = filtrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const resetPage = useCallback(() => setPage(0), []);
+  const { sortedRows: filtradosOrdenados, orderBy, order, requestSort } = useTableSort(
+    filtrados,
+    CONTRATO_SORT_COLUMNS,
+    { onSortChange: resetPage },
+  );
+
+  const paginados = filtradosOrdenados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const listaFiltrada = filtrados.slice(0, listVisibleCount);
   const hasMoreListItems = listVisibleCount < filtrados.length;
 
@@ -441,8 +461,15 @@ export default function ContratosPage() {
               >
                 <Box component="thead">
                   <Box component="tr">
-                    {TABLE_HEADERS.map((h) => (
-                      <Box component="th" key={h} sx={tableThSx}>{h}</Box>
+                    {CONTRATO_TABLE_COLUMNS.map((col) => (
+                      <SortableTableHeadCell
+                        key={col.id}
+                        columnId={col.id}
+                        label={col.label}
+                        active={orderBy === col.id}
+                        direction={order}
+                        onSort={requestSort}
+                      />
                     ))}
                   </Box>
                 </Box>

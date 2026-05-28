@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
   MenuItem, Button, FormControlLabel, Switch, Stack,
@@ -15,6 +15,27 @@ import { useSnackbar } from 'notistack';
 import { empresas, fornecedores, contasContabeis } from '../data/mockData';
 import CurrencyTextField from '../components/form/CurrencyTextField';
 import DatePickerField from '../components/form/DatePickerField';
+import { SortableTableHeadCell } from '../components/table/SortableTableHeadCell';
+import { useTableSort } from '../hooks/useTableSort';
+
+const PROVISAO_SORT_COLUMNS = {
+  id: { type: 'string' },
+  empresa: { type: 'string' },
+  fornecedor: { type: 'string' },
+  conta: { type: 'string' },
+  valor: { type: 'number' },
+  status: { type: 'string' },
+};
+
+const PROVISAO_TABLE_COLUMNS = [
+  { id: 'id', label: 'ID' },
+  { id: 'empresa', label: 'Empresa' },
+  { id: 'fornecedor', label: 'Fornecedor' },
+  { id: 'conta', label: 'Conta' },
+  { id: 'valor', label: 'Valor' },
+  { id: 'status', label: 'Status' },
+  { id: 'acoes', label: 'Ações', sortable: false },
+];
 
 const formGridSx = {
   display: 'grid',
@@ -149,7 +170,13 @@ export default function ProvisaoPage() {
 
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
-  const provisoesPaginadas = provisoes.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const resetPage = useCallback(() => setPage(0), []);
+  const { sortedRows: provisoesOrdenadas, orderBy, order, requestSort } = useTableSort(
+    provisoes,
+    PROVISAO_SORT_COLUMNS,
+    { onSortChange: resetPage },
+  );
+  const provisoesPaginadas = provisoesOrdenadas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const provisoesLista = provisoes.slice(0, listVisibleCount);
   const hasMoreListItems = listVisibleCount < provisoes.length;
 
@@ -332,22 +359,16 @@ export default function ProvisaoPage() {
               <Box component="table" sx={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
                 <Box component="thead">
                   <Box component="tr">
-                    {['ID', 'Empresa', 'Fornecedor', 'Conta', 'Valor', 'Status', 'Ações'].map((h) => (
-                      <Box
-                        component="th"
-                        key={h}
-                        sx={{
-                          p: '12px 16px',
-                          textAlign: 'left',
-                          bgcolor: 'primary.dark',
-                          color: 'white',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {h}
-                      </Box>
+                    {PROVISAO_TABLE_COLUMNS.map((col) => (
+                      <SortableTableHeadCell
+                        key={col.id}
+                        columnId={col.id}
+                        label={col.label}
+                        sortable={col.sortable !== false}
+                        active={orderBy === col.id}
+                        direction={order}
+                        onSort={requestSort}
+                      />
                     ))}
                   </Box>
                 </Box>
