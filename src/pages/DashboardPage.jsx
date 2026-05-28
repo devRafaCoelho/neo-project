@@ -12,6 +12,7 @@ import {
 import {
   Avatar,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -19,6 +20,7 @@ import {
   FormControlLabel,
   Stack,
   Switch,
+  TablePagination,
   Typography,
   useMediaQuery,
   useTheme,
@@ -183,10 +185,7 @@ function ProvisaoListCard({ provisao, expanded, onToggle }) {
                 currency: "BRL",
               }),
             ],
-            [
-              "Data",
-              new Date(provisao.data).toLocaleDateString("pt-BR"),
-            ],
+            ["Data", new Date(provisao.data).toLocaleDateString("pt-BR")],
           ].map(([label, value]) => (
             <Box
               key={label}
@@ -196,7 +195,11 @@ function ProvisaoListCard({ provisao, expanded, onToggle }) {
                 gap: 2,
               }}
             >
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+              >
                 {label}
               </Typography>
               <Typography variant="body2" fontWeight={500} textAlign="right">
@@ -215,9 +218,18 @@ export default function DashboardPage() {
   const isTabletOrMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const [modoLista, setModoLista] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [listVisibleCount, setListVisibleCount] = useState(3);
 
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
+  const tableRows = provisoesRecentes.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+  const listRows = provisoesRecentes.slice(0, listVisibleCount);
+  const hasMoreListItems = listVisibleCount < provisoesRecentes.length;
 
   const handleToggleCard = (id) => {
     setExpandedId((current) => (current === id ? null : id));
@@ -421,6 +433,7 @@ export default function DashboardPage() {
                     onChange={(e) => {
                       setModoLista(e.target.checked);
                       setExpandedId(null);
+                      setPage(0);
                     }}
                     color="primary"
                   />
@@ -438,7 +451,7 @@ export default function DashboardPage() {
 
           {showList && (
             <Stack spacing={1.5}>
-              {provisoesRecentes.map((p) => (
+              {listRows.map((p) => (
                 <ProvisaoListCard
                   key={p.id}
                   provisao={p}
@@ -446,118 +459,222 @@ export default function DashboardPage() {
                   onToggle={() => handleToggleCard(p.id)}
                 />
               ))}
+              {hasMoreListItems && (
+                <Box
+                  sx={{ display: "flex", justifyContent: "center", pt: 0.5 }}
+                >
+                  <Button
+                    variant="text"
+                    onClick={() =>
+                      setListVisibleCount((current) =>
+                        Math.min(current + 3, provisoesRecentes.length),
+                      )
+                    }
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Mostrar mais
+                  </Button>
+                </Box>
+              )}
             </Stack>
           )}
 
           {showTable && (
-          <Box sx={{ overflowX: "auto" }}>
-            <Box
-              component="table"
-              sx={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}
-            >
-              <Box component="thead">
-                <Box component="tr">
-                  {[
-                    "ID",
-                    "Empresa",
-                    "Fornecedor",
-                    "Conta",
-                    "Valor",
-                    "Status",
-                    "Data",
-                  ].map((h) => (
+            <Box sx={{ overflowX: "auto" }}>
+              <Box
+                component="table"
+                sx={{
+                  width: "max-content",
+                  minWidth: "100%",
+                  borderCollapse: "collapse",
+                  tableLayout: "auto",
+                }}
+              >
+                <Box component="thead">
+                  <Box component="tr">
+                    {[
+                      "ID",
+                      "Empresa",
+                      "Fornecedor",
+                      "Conta",
+                      "Valor",
+                      "Status",
+                      "Data",
+                    ].map((h) => (
+                      <Box
+                        component="th"
+                        key={h}
+                        sx={{
+                          p: "12px 16px",
+                          textAlign: "left",
+                          bgcolor: "primary.dark",
+                          color: "white",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {h}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {tableRows.map((p, i) => (
                     <Box
-                      component="th"
-                      key={h}
+                      component="tr"
+                      key={p.id}
                       sx={{
-                        p: "12px 16px",
-                        textAlign: "left",
-                        bgcolor: "primary.dark",
-                        color: "white",
-                        fontSize: "0.8rem",
-                        fontWeight: 700,
+                        bgcolor: i % 2 === 0 ? "white" : "#F0F7F3",
+                        "&:hover": { bgcolor: "#DCEBE1" },
                       }}
                     >
-                      {h}
+                      <Box
+                        component="td"
+                        sx={{
+                          p: "10px 16px",
+                          fontSize: "0.82rem",
+                          color: "primary.dark",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {p.id}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          p: "10px 16px",
+                          fontSize: "0.82rem",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {p.empresa}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          p: "10px 16px",
+                          fontSize: "0.82rem",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {p.fornecedor}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          p: "10px 16px",
+                          fontSize: "0.82rem",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {p.conta}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          p: "10px 16px",
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {p.valor.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{ p: "10px 16px", whiteSpace: "nowrap" }}
+                      >
+                        <Chip
+                          label={p.status}
+                          size="small"
+                          color={statusChipColor(p.status)}
+                          sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                        />
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          p: "10px 16px",
+                          fontSize: "0.82rem",
+                          color: "text.secondary",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {new Date(p.data).toLocaleDateString("pt-BR")}
+                      </Box>
                     </Box>
                   ))}
                 </Box>
               </Box>
-              <Box component="tbody">
-                {provisoesRecentes.map((p, i) => (
-                  <Box
-                    component="tr"
-                    key={p.id}
-                    sx={{
-                      bgcolor: i % 2 === 0 ? "white" : "#F0F7F3",
-                      "&:hover": { bgcolor: "#DCEBE1" },
-                    }}
-                  >
-                    <Box
-                      component="td"
-                      sx={{
-                        p: "10px 16px",
-                        fontSize: "0.82rem",
-                        color: "primary.dark",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {p.id}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{ p: "10px 16px", fontSize: "0.82rem" }}
-                    >
-                      {p.empresa}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{ p: "10px 16px", fontSize: "0.82rem" }}
-                    >
-                      {p.fornecedor}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{ p: "10px 16px", fontSize: "0.82rem" }}
-                    >
-                      {p.conta}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{
-                        p: "10px 16px",
-                        fontSize: "0.82rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {p.valor.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </Box>
-                    <Box component="td" sx={{ p: "10px 16px" }}>
-                      <Chip
-                        label={p.status}
-                        size="small"
-                        color={statusChipColor(p.status)}
-                        sx={{ fontWeight: 600, fontSize: "0.75rem" }}
-                      />
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{
-                        p: "10px 16px",
-                        fontSize: "0.82rem",
-                        color: "text.secondary",
-                      }}
-                    >
-                      {new Date(p.data).toLocaleDateString("pt-BR")}
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
             </Box>
-          </Box>
+          )}
+          {showTable && (
+            <TablePagination
+              component="div"
+              count={provisoesRecentes.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage="Linhas por página:"
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}–${to} de ${count}`
+              }
+              sx={{
+                "& .MuiTablePagination-toolbar": {
+                  px: { xs: 1, sm: 2 },
+                  display: { xs: "grid", sm: "flex" },
+                  gridTemplateColumns: { xs: "auto auto 1fr", sm: "none" },
+                  gridTemplateAreas: {
+                    xs: '"label input rows" "actions actions actions"',
+                    sm: "none",
+                  },
+                  alignItems: "center",
+                  columnGap: { xs: 1, sm: 0 },
+                  rowGap: { xs: 0.75, sm: 0 },
+                },
+                "& .MuiTablePagination-spacer": {
+                  display: { xs: "none", sm: "block" },
+                },
+                "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+                  {
+                    margin: 0,
+                  },
+                "& .MuiTablePagination-selectLabel": {
+                  gridArea: { xs: "label", sm: "auto" },
+                  justifySelf: { xs: "start", sm: "auto" },
+                },
+                "& .MuiTablePagination-input": {
+                  gridArea: { xs: "input", sm: "auto" },
+                  justifySelf: { xs: "start", sm: "auto" },
+                },
+                "& .MuiTablePagination-displayedRows": {
+                  gridArea: { xs: "rows", sm: "auto" },
+                  justifySelf: { xs: "start", sm: "auto" },
+                },
+                "& .MuiTablePagination-actions": {
+                  gridArea: { xs: "actions", sm: "auto" },
+                  justifySelf: { xs: "end", sm: "auto" },
+                },
+                "& .MuiTablePagination-actions .MuiIconButton-root": {
+                  color: "text.secondary",
+                },
+                "& .MuiTablePagination-actions .MuiIconButton-root.Mui-disabled":
+                  {
+                    color: "text.disabled",
+                    opacity: 0.75,
+                  },
+              }}
+            />
           )}
         </CardContent>
       </Card>
