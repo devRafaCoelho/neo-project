@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
-  InputAdornment, IconButton, Link, Alert, Divider,
+  InputAdornment, IconButton, Link, Alert, Divider, useTheme,
 } from '@mui/material';
 import { Visibility, VisibilityOff, LockOutlined } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
@@ -18,6 +18,8 @@ const schema = yup.object({
 });
 
 export default function LoginPage() {
+  const theme = useTheme();
+  const { primary } = theme.palette;
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
   const { login } = useAuth();
@@ -69,7 +71,7 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(145deg, #004042 0%, #00A443 60%, #26BF64 100%)',
+        background: `linear-gradient(145deg, ${primary.dark} 0%, ${primary.main} 60%, ${primary.light} 100%)`,
         p: 2,
       }}
     >

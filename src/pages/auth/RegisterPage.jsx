@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
   Stepper, Step, StepLabel, InputAdornment, IconButton,
-  MenuItem, Stack, Link, Chip,
+  MenuItem, Stack, Link, Chip, useTheme,
 } from '@mui/material';
 import { Visibility, VisibilityOff, CheckCircle } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
@@ -41,6 +41,8 @@ const step2Schema = yup.object({
 const schemas = [step1Schema, step2Schema, yup.object()];
 
 export default function RegisterPage() {
+  const theme = useTheme();
+  const { primary } = theme.palette;
   const [activeStep, setActiveStep] = useState(0);
   const [allData, setAllData] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -83,7 +85,7 @@ export default function RegisterPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(145deg, #004042 0%, #00A443 60%, #26BF64 100%)',
+        background: `linear-gradient(145deg, ${primary.dark} 0%, ${primary.main} 60%, ${primary.light} 100%)`,
         p: 2,
       }}
     >
@@ -183,7 +185,7 @@ export default function RegisterPage() {
                 <Typography variant="h6" fontWeight={700}>Confirme seus dados</Typography>
                 <Typography variant="body2" color="text.secondary">Verifique as informações antes de finalizar</Typography>
               </Box>
-              <Box sx={{ bgcolor: '#F0F7F3', borderRadius: 3, p: 3, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ bgcolor: 'brand.muted', borderRadius: 3, p: 3, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {[
                   ['Nome completo', `${merged.nome || ''} ${merged.sobrenome || ''}`],
                   ['Cargo', merged.cargo],

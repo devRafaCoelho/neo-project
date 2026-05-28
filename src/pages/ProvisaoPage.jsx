@@ -377,7 +377,7 @@ export default function ProvisaoPage() {
                     <Box
                       component="tr"
                       key={p.id}
-                      sx={{ bgcolor: i % 2 === 0 ? 'white' : '#F0F7F3', '&:hover': { bgcolor: '#DCEBE1' } }}
+                      sx={{ bgcolor: i % 2 === 0 ? 'background.paper' : 'brand.muted', '&:hover': { bgcolor: 'brand.hover' } }}
                     >
                       <Box component="td" sx={{ p: '10px 16px', fontWeight: 700, color: 'primary.dark', whiteSpace: 'nowrap' }}>{p.id}</Box>
                       <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap' }}>{p.empresa}</Box>

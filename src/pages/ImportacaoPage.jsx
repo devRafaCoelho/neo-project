@@ -132,9 +132,9 @@ export default function ImportacaoPage() {
               p: 5,
               textAlign: 'center',
               cursor: 'pointer',
-              bgcolor: isDragActive ? '#F0FAF4' : file ? '#F0F7F3' : 'background.paper',
+              bgcolor: isDragActive ? 'brand.dragActive' : file ? 'brand.muted' : 'background.paper',
               transition: 'all 0.2s',
-              '&:hover': { borderColor: 'primary.main', bgcolor: '#F7FCF9' },
+              '&:hover': { borderColor: 'primary.main', bgcolor: 'brand.accentSoft' },
             }}
           >
             <input {...getInputProps()} />
@@ -155,7 +155,7 @@ export default function ImportacaoPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   ou clique para selecionar
                 </Typography>
-                <Chip label=".xlsx  .xls  .csv" size="small" sx={{ mt: 1.5, bgcolor: '#DCEBE1' }} />
+                <Chip label=".xlsx  .xls  .csv" size="small" sx={{ mt: 1.5, bgcolor: 'brand.chip' }} />
               </Box>
             )}
           </Box>

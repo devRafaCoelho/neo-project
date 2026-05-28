@@ -76,10 +76,10 @@ const statusColor = (s) => {
   return 'default';
 };
 
-const progressBarColor = (percentual) => {
-  if (percentual > 80) return '#E3850D';
-  if (percentual > 60) return '#00A443';
-  return '#26BF64';
+const progressBarColor = (percentual, theme) => {
+  if (percentual > 80) return theme.palette.warning.main;
+  if (percentual > 60) return theme.palette.primary.main;
+  return theme.palette.primary.light;
 };
 
 function KpiCard({ icon, label, value, sub, color }) {
@@ -108,6 +108,7 @@ function SectionTitle({ children }) {
 }
 
 function UtilizadoBar({ percentual }) {
+  const theme = useTheme();
   return (
     <Tooltip title={`${percentual}% utilizado`}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 100 }}>
@@ -118,9 +119,9 @@ function UtilizadoBar({ percentual }) {
             flex: 1,
             height: 8,
             borderRadius: 4,
-            bgcolor: '#DCEBE1',
+            bgcolor: 'brand.hover',
             '& .MuiLinearProgress-bar': {
-              bgcolor: progressBarColor(percentual),
+              bgcolor: progressBarColor(percentual, theme),
             },
           }}
         />
@@ -138,7 +139,7 @@ function ContratoListCard({ contrato, expanded, onToggle }) {
       variant="outlined"
       sx={{
         borderColor: expanded ? 'primary.main' : 'divider',
-        bgcolor: expanded ? '#F7FCF9' : 'background.paper',
+        bgcolor: expanded ? 'brand.accentSoft' : 'background.paper',
         transition: 'border-color 0.2s, background-color 0.2s',
       }}
     >
@@ -225,8 +226,8 @@ function ContratoTableRow({ contrato, index }) {
     <Box
       component="tr"
       sx={{
-        bgcolor: index % 2 === 0 ? 'white' : '#F0F7F3',
-        '&:hover': { bgcolor: '#DCEBE1' },
+        bgcolor: index % 2 === 0 ? 'background.paper' : 'brand.muted',
+        '&:hover': { bgcolor: 'brand.hover' },
       }}
     >
       <Box component="td" sx={{ ...tableTdSx, color: 'primary.dark', fontWeight: 700 }}>
@@ -329,7 +330,7 @@ export default function ContratosPage() {
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="status" tick={{ fontSize: 12 }} width={90} />
                 <RechartTooltip />
-                <Bar dataKey="quantidade" name="Qtd" fill="#00A443" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="quantidade" name="Qtd" fill={theme.palette.primary.main} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

@@ -106,7 +106,7 @@ function ResultadosEmptyState({ onLimparFiltros }) {
         py: { xs: 5, sm: 6 },
         px: 2,
         borderRadius: 2,
-        bgcolor: '#F7FCF9',
+        bgcolor: 'brand.accentSoft',
         border: '1px dashed',
         borderColor: 'divider',
       }}
@@ -136,7 +136,7 @@ function RelatorioListCard({ row, expanded, onToggle }) {
       variant="outlined"
       sx={{
         borderColor: expanded ? 'primary.main' : 'divider',
-        bgcolor: expanded ? '#F7FCF9' : 'background.paper',
+        bgcolor: expanded ? 'brand.accentSoft' : 'background.paper',
         transition: 'border-color 0.2s, background-color 0.2s',
       }}
     >
@@ -505,8 +505,8 @@ export default function RelatoriosPage() {
                         component="tr"
                         key={row.id}
                         sx={{
-                          bgcolor: i % 2 === 0 ? 'white' : '#F0F7F3',
-                          '&:hover': { bgcolor: '#DCEBE1' },
+                          bgcolor: i % 2 === 0 ? 'background.paper' : 'brand.muted',
+                          '&:hover': { bgcolor: 'brand.hover' },
                         }}
                       >
                         <Box

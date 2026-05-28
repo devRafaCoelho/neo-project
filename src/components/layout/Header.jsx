@@ -26,6 +26,8 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isSaiModulePath } from '../../config/navigation';
+import BrandColorPicker from '../theme/BrandColorPicker';
+import { useBrandTheme } from '../../context/BrandThemeContext';
 import logo from '../../assets/neoenergia-logo.svg';
 
 const saiNavChildren = [
@@ -52,12 +54,12 @@ const drawerItemSx = {
   mb: 0.5,
   color: 'text.primary',
   '&.Mui-selected': {
-    bgcolor: '#DCEBE1',
+    bgcolor: 'brand.hover',
     color: 'primary.dark',
     '& .MuiListItemIcon-root': { color: 'primary.main' },
-    '&:hover': { bgcolor: '#C5DDD0' },
+    '&:hover': { bgcolor: 'brand.hoverStrong' },
   },
-  '&:hover': { bgcolor: '#F0F7F3' },
+  '&:hover': { bgcolor: 'brand.muted' },
 };
 
 export default function Header() {
@@ -71,6 +73,7 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { scheme } = useBrandTheme();
 
   const saiSectionActive = isSaiModulePath(location.pathname);
 
@@ -213,7 +216,7 @@ export default function Header() {
                       gap: 1.5,
                       py: 1.1,
                       fontWeight: isActive(item.path) ? 700 : 500,
-                      bgcolor: isActive(item.path) ? '#F0F7F3' : 'transparent',
+                      bgcolor: isActive(item.path) ? 'brand.muted' : 'transparent',
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 32, color: isActive(item.path) ? 'primary.main' : 'text.secondary' }}>
@@ -259,13 +262,20 @@ export default function Header() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         PaperProps={{
-          sx: { mt: 1, minWidth: 200, borderRadius: 3, boxShadow: '0 8px 30px rgba(0,64,66,0.15)' },
+          sx: {
+            mt: 1,
+            minWidth: 240,
+            borderRadius: 3,
+            boxShadow: `0 8px 30px rgba(${scheme.shadowRgb},0.15)`,
+          },
         }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle2" fontWeight={700}>{user?.name}</Typography>
           <Typography variant="caption" color="text.secondary">{user?.role}</Typography>
         </Box>
+        <Divider />
+        <BrandColorPicker />
         <Divider />
         <MenuItem onClick={handleProfile} sx={{ gap: 1.5, py: 1.2 }}>
           <PersonIcon fontSize="small" color="action" />

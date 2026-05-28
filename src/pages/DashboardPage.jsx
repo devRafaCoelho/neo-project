@@ -25,6 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { zebraRowBg } from "../theme/tableStyles";
 import {
   Bar,
   BarChart,
@@ -148,7 +149,7 @@ function ProvisaoListCard({ provisao, expanded, onToggle }) {
       variant="outlined"
       sx={{
         borderColor: expanded ? "primary.main" : "divider",
-        bgcolor: expanded ? "#F7FCF9" : "background.paper",
+        bgcolor: expanded ? "brand.accentSoft" : "background.paper",
         transition: "border-color 0.2s, background-color 0.2s",
       }}
     >
@@ -237,6 +238,7 @@ function ProvisaoListCard({ provisao, expanded, onToggle }) {
 
 export default function DashboardPage() {
   const theme = useTheme();
+  const { palette } = theme;
   const isTabletOrMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const [modoLista, setModoLista] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
@@ -364,13 +366,13 @@ export default function DashboardPage() {
                   <Bar
                     dataKey="plano"
                     name="Plano"
-                    fill="#004042"
+                    fill={palette.primary.dark}
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
                     dataKey="rev1"
                     name="REV1"
-                    fill="#00A443"
+                    fill={palette.primary.main}
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
@@ -421,7 +423,7 @@ export default function DashboardPage() {
                     type="monotone"
                     dataKey="planejado"
                     name="Planejado"
-                    stroke="#004042"
+                    stroke={palette.primary.dark}
                     strokeWidth={2.5}
                     dot={{ r: 4 }}
                   />
@@ -429,7 +431,7 @@ export default function DashboardPage() {
                     type="monotone"
                     dataKey="realizado"
                     name="Realizado"
-                    stroke="#00A443"
+                    stroke={palette.primary.main}
                     strokeWidth={2.5}
                     dot={{ r: 4 }}
                   />
@@ -538,8 +540,8 @@ export default function DashboardPage() {
                       component="tr"
                       key={p.id}
                       sx={{
-                        bgcolor: i % 2 === 0 ? "white" : "#F0F7F3",
-                        "&:hover": { bgcolor: "#DCEBE1" },
+                        bgcolor: zebraRowBg(i % 2 === 0),
+                        "&:hover": { bgcolor: "brand.hover" },
                       }}
                     >
                       <Box

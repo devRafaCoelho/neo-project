@@ -23,11 +23,13 @@ import {
   InputAdornment,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
+import { useBrandTheme } from "../context/BrandThemeContext";
 import { useAuth } from "../context/AuthContext";
 
 const senhaSchema = yup.object({
@@ -46,6 +48,9 @@ const senhaSchema = yup.object({
 });
 
 export default function PerfilPage() {
+  const theme = useTheme();
+  const { primary } = theme.palette;
+  const { scheme } = useBrandTheme();
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [editando, setEditando] = useState(false);
@@ -117,9 +122,8 @@ export default function PerfilPage() {
                   fontWeight: 700,
                   mx: "auto",
                   mb: 2,
-                  background:
-                    "linear-gradient(135deg, #00A443 0%, #004042 100%)",
-                  boxShadow: "0 4px 20px rgba(0,164,67,0.35)",
+                  background: `linear-gradient(135deg, ${primary.main} 0%, ${primary.dark} 100%)`,
+                  boxShadow: `0 4px 20px rgba(${scheme.shadowRgb},0.35)`,
                 }}
               >
                 {user?.initials}

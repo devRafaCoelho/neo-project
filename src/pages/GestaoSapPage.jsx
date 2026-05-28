@@ -61,7 +61,7 @@ function ResultadosEmptyState({ onLimparFiltros }) {
         py: { xs: 5, sm: 6 },
         px: 2,
         borderRadius: 2,
-        bgcolor: '#F7FCF9',
+        bgcolor: 'brand.accentSoft',
         border: '1px dashed',
         borderColor: 'divider',
       }}
@@ -267,7 +267,7 @@ export default function GestaoSapPage() {
                       alignItems: 'stretch',
                       gap: 1.25,
                       bgcolor: 'white',
-                      '&:hover': { bgcolor: '#F0F7F3' },
+                      '&:hover': { bgcolor: 'brand.muted' },
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
@@ -279,7 +279,7 @@ export default function GestaoSapPage() {
                     <Typography variant="body2">{r.descricao}</Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       <Chip label={r.empresa} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
-                      <Chip label={`Transação: ${r.transacao}`} size="small" sx={{ bgcolor: '#DCEBE1', fontSize: '0.75rem' }} />
+                      <Chip label={`Transação: ${r.transacao}`} size="small" sx={{ bgcolor: 'brand.chip', fontSize: '0.75rem' }} />
                     </Box>
                   </Box>
                 ))}
@@ -333,8 +333,8 @@ export default function GestaoSapPage() {
                           component="tr"
                           key={r.codigo}
                           sx={{
-                            bgcolor: i % 2 === 0 ? 'white' : '#F0F7F3',
-                            '&:hover': { bgcolor: '#DCEBE1' },
+                            bgcolor: i % 2 === 0 ? 'background.paper' : 'brand.muted',
+                            '&:hover': { bgcolor: 'brand.hover' },
                           }}
                         >
                           <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem', color: 'primary.dark', fontWeight: 700, whiteSpace: 'nowrap' }}>
