@@ -14,6 +14,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { contratos, contratosPorStatus, vencimentosPorMes } from '../data/mockData';
+import {
+  contratosStatusTooltip,
+  contratosVencimentosTooltip,
+} from '../components/charts/chartTooltipPresets';
 import { SortableTableHeadCell } from '../components/table/SortableTableHeadCell';
 import { useTableSort } from '../hooks/useTableSort';
 
@@ -329,7 +333,17 @@ export default function ContratosPage() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E0EAE5" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="status" tick={{ fontSize: 12 }} width={90} />
-                <RechartTooltip />
+                <RechartTooltip
+                  content={contratosStatusTooltip}
+                  cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                  wrapperStyle={{ outline: 'none', zIndex: 10 }}
+                  contentStyle={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                    boxShadow: 'none',
+                  }}
+                />
                 <Bar dataKey="quantidade" name="Qtd" fill={theme.palette.primary.main} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -344,8 +358,23 @@ export default function ContratosPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#E0EAE5" />
                 <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <RechartTooltip />
-                <Bar dataKey="quantidade" name="Contratos" fill="#E3850D" radius={[4, 4, 0, 0]} />
+                <RechartTooltip
+                  content={contratosVencimentosTooltip}
+                  cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                  wrapperStyle={{ outline: 'none', zIndex: 10 }}
+                  contentStyle={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                    boxShadow: 'none',
+                  }}
+                />
+                <Bar
+                  dataKey="quantidade"
+                  name="Contratos"
+                  fill={theme.palette.warning.main}
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

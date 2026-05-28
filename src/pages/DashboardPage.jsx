@@ -44,6 +44,10 @@ import {
   opexData,
   provisoesRecentes,
 } from "../data/mockData";
+import {
+  dashboardCapexTooltip,
+  dashboardOpexTooltip,
+} from "../components/charts/chartTooltipPresets";
 import { SortableTableHeadCell } from "../components/table/SortableTableHeadCell";
 import { useTableSort } from "../hooks/useTableSort";
 
@@ -344,7 +348,15 @@ export default function DashboardPage() {
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
-                    formatter={(v) => `R$ ${v.toLocaleString("pt-BR")} K`}
+                    content={dashboardOpexTooltip}
+                    cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                    wrapperStyle={{ outline: "none", zIndex: 10 }}
+                    contentStyle={{
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      boxShadow: "none",
+                    }}
                   />
                   <Legend
                     align="center"
@@ -400,7 +412,15 @@ export default function DashboardPage() {
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
-                    formatter={(v) => `R$ ${v.toLocaleString("pt-BR")} K`}
+                    content={dashboardCapexTooltip}
+                    cursor={{ stroke: palette.primary.light, strokeWidth: 1 }}
+                    wrapperStyle={{ outline: "none", zIndex: 10 }}
+                    contentStyle={{
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      boxShadow: "none",
+                    }}
                   />
                   <Legend
                     align="center"
