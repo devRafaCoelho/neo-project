@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
   MenuItem, Chip, Collapse, FormControlLabel,
-  Stack, Switch, LinearProgress, Tooltip,
+  Stack, Switch, LinearProgress, Tooltip, Button,
   TablePagination, useMediaQuery, useTheme,
 } from '@mui/material';
 import {
@@ -249,6 +249,7 @@ export default function ContratosPage() {
   const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [listVisibleCount, setListVisibleCount] = useState(3);
   const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
   const [modoLista, setModoLista] = useState(false);
@@ -264,6 +265,8 @@ export default function ContratosPage() {
   });
 
   const paginados = filtrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const listaFiltrada = filtrados.slice(0, listVisibleCount);
+  const hasMoreListItems = listVisibleCount < filtrados.length;
 
   const handleToggleCard = (id) => {
     setExpandedId((current) => (current === id ? null : id));
@@ -340,7 +343,12 @@ export default function ContratosPage() {
               size="small"
               fullWidth
               value={filtroStatus}
-              onChange={(e) => { setFiltroStatus(e.target.value); setPage(0); }}
+              onChange={(e) => {
+                setFiltroStatus(e.target.value);
+                setPage(0);
+                setListVisibleCount(3);
+                setExpandedId(null);
+              }}
             >
               <MenuItem value="Todos">Todos</MenuItem>
               <MenuItem value="Ativo">Ativo</MenuItem>
@@ -352,7 +360,12 @@ export default function ContratosPage() {
               size="small"
               fullWidth
               value={filtroEmpresa}
-              onChange={(e) => { setFiltroEmpresa(e.target.value); setPage(0); }}
+              onChange={(e) => {
+                setFiltroEmpresa(e.target.value);
+                setPage(0);
+                setListVisibleCount(3);
+                setExpandedId(null);
+              }}
               placeholder="Digite o nome da empresa"
             />
           </Box>
@@ -366,6 +379,7 @@ export default function ContratosPage() {
                     onChange={(e) => {
                       setModoLista(e.target.checked);
                       setExpandedId(null);
+                      setPage(0);
                     }}
                     color="primary"
                   />
@@ -389,7 +403,7 @@ export default function ContratosPage() {
 
           {filtrados.length > 0 && showList && (
             <Stack spacing={1.5} sx={{ mb: 2 }}>
-              {paginados.map((c) => (
+              {listaFiltrada.map((c) => (
                 <ContratoListCard
                   key={c.id}
                   contrato={c}
@@ -397,6 +411,21 @@ export default function ContratosPage() {
                   onToggle={() => handleToggleCard(c.id)}
                 />
               ))}
+              {hasMoreListItems && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', pt: 0.5 }}>
+                  <Button
+                    variant="text"
+                    onClick={() =>
+                      setListVisibleCount((current) =>
+                        Math.min(current + 3, filtrados.length)
+                      )
+                    }
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Mostrar mais
+                  </Button>
+                </Box>
+              )}
             </Stack>
           )}
 
@@ -426,7 +455,7 @@ export default function ContratosPage() {
             </Box>
           )}
 
-          {filtrados.length > 0 && (
+          {filtrados.length > 0 && showTable && (
             <TablePagination
               component="div"
               count={filtrados.length}
@@ -440,6 +469,49 @@ export default function ContratosPage() {
               rowsPerPageOptions={[5, 10, 25]}
               labelRowsPerPage="Linhas por página:"
               labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+              sx={{
+                '& .MuiTablePagination-toolbar': {
+                  px: { xs: 1, sm: 2 },
+                  display: { xs: 'grid', sm: 'flex' },
+                  gridTemplateColumns: { xs: 'auto auto 1fr', sm: 'none' },
+                  gridTemplateAreas: {
+                    xs: '"label input rows" "actions actions actions"',
+                    sm: 'none',
+                  },
+                  alignItems: 'center',
+                  columnGap: { xs: 1, sm: 0 },
+                  rowGap: { xs: 0.75, sm: 0 },
+                },
+                '& .MuiTablePagination-spacer': {
+                  display: { xs: 'none', sm: 'block' },
+                },
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  margin: 0,
+                },
+                '& .MuiTablePagination-selectLabel': {
+                  gridArea: { xs: 'label', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-input': {
+                  gridArea: { xs: 'input', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-displayedRows': {
+                  gridArea: { xs: 'rows', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-actions': {
+                  gridArea: { xs: 'actions', sm: 'auto' },
+                  justifySelf: { xs: 'end', sm: 'auto' },
+                },
+                '& .MuiTablePagination-actions .MuiIconButton-root': {
+                  color: 'text.secondary',
+                },
+                '& .MuiTablePagination-actions .MuiIconButton-root.Mui-disabled': {
+                  color: 'text.disabled',
+                  opacity: 0.75,
+                },
+              }}
             />
           )}
         </CardContent>

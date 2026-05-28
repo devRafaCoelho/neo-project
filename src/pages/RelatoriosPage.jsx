@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField,
   MenuItem, Button, Chip, Collapse, FormControlLabel,
-  Stack, Switch, useMediaQuery, useTheme,
+  Stack, Switch, TablePagination, useMediaQuery, useTheme,
 } from '@mui/material';
 import {
   Assessment, ExpandLess, ExpandMore, FileDownload, Search, SearchOff,
@@ -224,9 +224,15 @@ export default function RelatoriosPage() {
   const [dados, setDados] = useState(null);
   const [modoLista, setModoLista] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [listVisibleCount, setListVisibleCount] = useState(3);
 
   const showTable = !isTabletOrMobile || !modoLista;
   const showList = isTabletOrMobile && modoLista;
+  const tableRows = (dados ?? []).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const listRows = (dados ?? []).slice(0, listVisibleCount);
+  const hasMoreListItems = (dados?.length ?? 0) > listVisibleCount;
 
   const handleFiltrar = () => {
     const resultado = filtrarRelatorios({
@@ -238,6 +244,8 @@ export default function RelatoriosPage() {
     });
     setDados([...resultado]);
     setExpandedId(null);
+    setPage(0);
+    setListVisibleCount(3);
   };
 
   const handleExportar = () => {
@@ -263,6 +271,8 @@ export default function RelatoriosPage() {
     setMesFim('');
     setDados(null);
     setExpandedId(null);
+    setPage(0);
+    setListVisibleCount(3);
   };
 
   const semResultados = dados != null && dados.length === 0;
@@ -401,6 +411,7 @@ export default function RelatoriosPage() {
                       onChange={(e) => {
                         setModoLista(e.target.checked);
                         setExpandedId(null);
+                        setPage(0);
                       }}
                       color="primary"
                     />
@@ -422,7 +433,7 @@ export default function RelatoriosPage() {
 
             {comResultados && showList && (
               <Stack spacing={1.5}>
-                {dados.map((row) => (
+                {listRows.map((row) => (
                   <RelatorioListCard
                     key={row.id}
                     row={row}
@@ -430,6 +441,19 @@ export default function RelatoriosPage() {
                     onToggle={() => handleToggleCard(row.id)}
                   />
                 ))}
+                {hasMoreListItems && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', pt: 0.5 }}>
+                    <Button
+                      variant="text"
+                      onClick={() =>
+                        setListVisibleCount((current) => Math.min(current + 3, dados.length))
+                      }
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Mostrar mais
+                    </Button>
+                  </Box>
+                )}
               </Stack>
             )}
 
@@ -454,7 +478,7 @@ export default function RelatoriosPage() {
                     </Box>
                   </Box>
                   <Box component="tbody">
-                    {dados.map((row, i) => (
+                    {tableRows.map((row, i) => (
                       <Box
                         component="tr"
                         key={row.id}
@@ -507,6 +531,65 @@ export default function RelatoriosPage() {
                   </Box>
                 </Box>
               </Box>
+            )}
+            {comResultados && showTable && (
+              <TablePagination
+                component="div"
+                count={dados.length}
+                page={page}
+                onPageChange={(_, p) => setPage(p)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+                rowsPerPageOptions={[5, 10, 25]}
+                labelRowsPerPage="Linhas por página:"
+                labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+                sx={{
+                  '& .MuiTablePagination-toolbar': {
+                    px: { xs: 1, sm: 2 },
+                    display: { xs: 'grid', sm: 'flex' },
+                    gridTemplateColumns: { xs: 'auto auto 1fr', sm: 'none' },
+                    gridTemplateAreas: {
+                      xs: '"label input rows" "actions actions actions"',
+                      sm: 'none',
+                    },
+                    alignItems: 'center',
+                    columnGap: { xs: 1, sm: 0 },
+                    rowGap: { xs: 0.75, sm: 0 },
+                  },
+                  '& .MuiTablePagination-spacer': {
+                    display: { xs: 'none', sm: 'block' },
+                  },
+                  '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                    margin: 0,
+                  },
+                  '& .MuiTablePagination-selectLabel': {
+                    gridArea: { xs: 'label', sm: 'auto' },
+                    justifySelf: { xs: 'start', sm: 'auto' },
+                  },
+                  '& .MuiTablePagination-input': {
+                    gridArea: { xs: 'input', sm: 'auto' },
+                    justifySelf: { xs: 'start', sm: 'auto' },
+                  },
+                  '& .MuiTablePagination-displayedRows': {
+                    gridArea: { xs: 'rows', sm: 'auto' },
+                    justifySelf: { xs: 'start', sm: 'auto' },
+                  },
+                  '& .MuiTablePagination-actions': {
+                    gridArea: { xs: 'actions', sm: 'auto' },
+                    justifySelf: { xs: 'end', sm: 'auto' },
+                  },
+                  '& .MuiTablePagination-actions .MuiIconButton-root': {
+                    color: 'text.secondary',
+                  },
+                  '& .MuiTablePagination-actions .MuiIconButton-root.Mui-disabled': {
+                    color: 'text.disabled',
+                    opacity: 0.75,
+                  },
+                }}
+              />
             )}
           </CardContent>
         </Card>
