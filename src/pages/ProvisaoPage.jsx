@@ -703,15 +703,19 @@ export default function ProvisaoPage() {
       </Dialog>
 
       <Dialog open={confirmarCancelamento} onClose={() => setConfirmarCancelamento(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Cancelar edição</DialogTitle>
+        <DialogTitle>
+          {provisaoEmEdicao ? 'Cancelar edição da provisão' : 'Cancelar cadastro da provisão'}
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            Tem certeza que deseja cancelar as alterações feitas?
+            {provisaoEmEdicao
+              ? 'Tem certeza que deseja cancelar as alterações feitas nesta provisão?'
+              : 'Tem certeza que deseja cancelar o cadastro desta nova provisão?'}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button variant="outlined" onClick={() => setConfirmarCancelamento(false)}>
-            Continuar editando
+            {provisaoEmEdicao ? 'Continuar editando' : 'Continuar cadastro'}
           </Button>
           <Button
             color="error"

@@ -907,15 +907,19 @@ export default function PedidoPage() {
       </Dialog>
 
       <Dialog open={confirmarCancelamento} onClose={() => setConfirmarCancelamento(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Cancelar edição</DialogTitle>
+        <DialogTitle>
+          {pedidoEmEdicao ? 'Cancelar edição do pedido' : 'Cancelar cadastro do pedido'}
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            Tem certeza que deseja cancelar as alterações feitas?
+            {pedidoEmEdicao
+              ? 'Tem certeza que deseja cancelar as alterações feitas neste pedido?'
+              : 'Tem certeza que deseja cancelar o cadastro deste novo pedido?'}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button variant="outlined" onClick={() => setConfirmarCancelamento(false)}>
-            Continuar editando
+            {pedidoEmEdicao ? 'Continuar editando' : 'Continuar cadastro'}
           </Button>
           <Button
             color="error"
