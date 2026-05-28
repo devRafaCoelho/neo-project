@@ -27,6 +27,8 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    getValues,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: yupResolver(schema) });
 
@@ -40,6 +42,24 @@ export default function LoginPage() {
     } else {
       setAuthError(result.message);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = getValues('email');
+    const emailValido = await trigger('email');
+
+    if (!email || !emailValido) {
+      enqueueSnackbar('Informe um e-mail válido para recuperar a senha.', {
+        variant: 'warning',
+      });
+      return;
+    }
+
+    // Fluxo simulado para o protótipo (sem backend de envio real).
+    enqueueSnackbar(`Enviamos instruções de recuperação para ${email}.`, {
+      variant: 'info',
+      autoHideDuration: 5000,
+    });
   };
 
   return (
@@ -116,6 +136,17 @@ export default function LoginPage() {
               }}
               sx={{ mb: 3 }}
             />
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Link
+                component="button"
+                variant="body2"
+                onClick={handleForgotPassword}
+                sx={{ fontWeight: 600, color: 'primary.main' }}
+              >
+                Esqueci minha senha
+              </Link>
+            </Box>
 
             <Button
               type="submit"

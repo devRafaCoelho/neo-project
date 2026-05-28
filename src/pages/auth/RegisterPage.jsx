@@ -50,7 +50,6 @@ export default function RegisterPage() {
 
   const {
     register,
-    handleSubmit,
     getValues,
     formState: { errors },
     trigger,
@@ -203,17 +202,32 @@ export default function RegisterPage() {
 
           <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
             {activeStep > 0 && (
-              <Button variant="outlined" onClick={handleBack} fullWidth sx={{ borderRadius: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={handleBack}
+                fullWidth
+                sx={{ borderRadius: 2, minHeight: 48, whiteSpace: 'nowrap' }}
+              >
                 Voltar
               </Button>
             )}
             {activeStep < steps.length - 1 ? (
-              <Button variant="contained" onClick={handleNext} fullWidth sx={{ borderRadius: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                fullWidth
+                sx={{ borderRadius: 2, minHeight: 48, whiteSpace: 'nowrap' }}
+              >
                 Próximo
               </Button>
             ) : (
-              <Button variant="contained" onClick={handleFinish} fullWidth sx={{ borderRadius: 2 }}>
-                Finalizar Cadastro
+              <Button
+                variant="contained"
+                onClick={handleFinish}
+                fullWidth
+                sx={{ borderRadius: 2, minHeight: 48, whiteSpace: 'nowrap' }}
+              >
+                Finalizar
               </Button>
             )}
           </Box>
