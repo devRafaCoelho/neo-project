@@ -406,6 +406,51 @@ export default function ProvisaoPage() {
               rowsPerPageOptions={[5, 10, 25]}
               labelRowsPerPage="Linhas por página:"
               labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+              sx={{
+                '& .MuiTablePagination-toolbar': {
+                  px: { xs: 1, sm: 2 },
+                  display: { xs: 'grid', sm: 'flex' },
+                  gridTemplateColumns: { xs: 'auto auto 1fr auto', sm: 'none' },
+                  gridTemplateAreas: {
+                    xs: '"label input . rows" ". . . actions"',
+                    sm: 'none',
+                  },
+                  alignItems: 'center',
+                  columnGap: { xs: 1, sm: 0 },
+                  rowGap: { xs: 0.75, sm: 0 },
+                },
+                '& .MuiTablePagination-spacer': {
+                  display: { xs: 'none', sm: 'block' },
+                },
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  margin: 0,
+                },
+                '& .MuiTablePagination-selectLabel': {
+                  gridArea: { xs: 'label', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-input': {
+                  gridArea: { xs: 'input', sm: 'auto' },
+                  justifySelf: { xs: 'start', sm: 'auto' },
+                },
+                '& .MuiTablePagination-displayedRows': {
+                  gridArea: { xs: 'rows', sm: 'auto' },
+                  justifySelf: { xs: 'center', sm: 'auto' },
+                  textAlign: { xs: 'center', sm: 'inherit' },
+                },
+                '& .MuiTablePagination-actions': {
+                  gridArea: { xs: 'actions', sm: 'auto' },
+                  justifySelf: { xs: 'center', sm: 'auto' },
+                  marginLeft: { xs: 0, sm: 'auto' },
+                },
+                '& .MuiTablePagination-actions .MuiIconButton-root': {
+                  color: 'text.secondary',
+                },
+                '& .MuiTablePagination-actions .MuiIconButton-root.Mui-disabled': {
+                  color: 'text.disabled',
+                  opacity: 0.75,
+                },
+              }}
             />
           )}
         </CardContent>

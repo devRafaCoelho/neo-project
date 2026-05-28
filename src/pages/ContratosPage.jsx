@@ -473,9 +473,9 @@ export default function ContratosPage() {
                 '& .MuiTablePagination-toolbar': {
                   px: { xs: 1, sm: 2 },
                   display: { xs: 'grid', sm: 'flex' },
-                  gridTemplateColumns: { xs: 'auto auto 1fr', sm: 'none' },
+                  gridTemplateColumns: { xs: 'auto auto 1fr auto', sm: 'none' },
                   gridTemplateAreas: {
-                    xs: '"label input rows" "actions actions actions"',
+                    xs: '"label input . rows" ". . . actions"',
                     sm: 'none',
                   },
                   alignItems: 'center',
@@ -498,11 +498,13 @@ export default function ContratosPage() {
                 },
                 '& .MuiTablePagination-displayedRows': {
                   gridArea: { xs: 'rows', sm: 'auto' },
-                  justifySelf: { xs: 'start', sm: 'auto' },
+                  justifySelf: { xs: 'center', sm: 'auto' },
+                  textAlign: { xs: 'center', sm: 'inherit' },
                 },
                 '& .MuiTablePagination-actions': {
                   gridArea: { xs: 'actions', sm: 'auto' },
-                  justifySelf: { xs: 'end', sm: 'auto' },
+                  justifySelf: { xs: 'center', sm: 'auto' },
+                  marginLeft: { xs: 0, sm: 'auto' },
                 },
                 '& .MuiTablePagination-actions .MuiIconButton-root': {
                   color: 'text.secondary',
