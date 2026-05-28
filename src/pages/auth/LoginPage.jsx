@@ -140,6 +140,7 @@ export default function LoginPage() {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Link
                 component="button"
+                type="button"
                 variant="body2"
                 onClick={handleForgotPassword}
                 sx={{ fontWeight: 600, color: 'primary.main' }}

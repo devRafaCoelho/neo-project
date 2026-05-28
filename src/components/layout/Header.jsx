@@ -3,7 +3,8 @@ import {
   AppBar, Toolbar, Box, IconButton, Avatar, Button,
   Drawer, List, ListItemButton, ListItemIcon, ListItemText,
   Divider, useMediaQuery, useTheme, Tooltip, Menu, MenuItem,
-  Typography,
+  Typography, Dialog, DialogTitle, DialogContent, DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -37,6 +38,7 @@ export default function Header() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -54,8 +56,17 @@ export default function Header() {
     navigate('/perfil');
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
     handleMenuClose();
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutDialogOpen(false);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLogoutDialogOpen(false);
     logout();
     navigate('/login');
   };
@@ -159,11 +170,33 @@ export default function Header() {
           <PersonIcon fontSize="small" color="action" />
           <Typography variant="body2">Meu Perfil</Typography>
         </MenuItem>
-        <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1.2, color: 'error.main' }}>
+        <MenuItem onClick={handleLogoutClick} sx={{ gap: 1.5, py: 1.2, color: 'error.main' }}>
           <LogoutIcon fontSize="small" />
           <Typography variant="body2">Sair</Typography>
         </MenuItem>
       </Menu>
+
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleLogoutCancel}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <DialogTitle id="logout-dialog-title">Confirmar saída</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            Tem certeza que deseja sair da sua conta?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleLogoutCancel} variant="outlined">
+            Cancelar
+          </Button>
+          <Button onClick={handleLogoutConfirm} variant="contained" color="error">
+            Sair
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Mobile / tablet Drawer — apenas navegação */}
       <Drawer
