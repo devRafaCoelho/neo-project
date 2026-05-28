@@ -140,10 +140,10 @@ export default function GestaoSapPage() {
     <Box>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" fontWeight={700} color="primary.dark">
-          Gestão SAP
+          Códigos SAP
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Consulte e gerencie códigos SAP de materiais e serviços
+          Consulta e gestão de códigos SAP de materiais e serviços — início do módulo SAI
         </Typography>
       </Box>
 

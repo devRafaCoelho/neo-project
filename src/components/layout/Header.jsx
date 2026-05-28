@@ -4,7 +4,7 @@ import {
   Drawer, List, ListItemButton, ListItemIcon, ListItemText,
   Divider, useMediaQuery, useTheme, Tooltip, Menu, MenuItem,
   Typography, Dialog, DialogTitle, DialogContent, DialogContentText,
-  DialogActions,
+  DialogActions, Collapse,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -14,18 +14,22 @@ import {
   ShoppingCart as PedidoIcon,
   Assessment as RelatoriosIcon,
   Description as ContratosIcon,
-  ManageAccounts as GestaoSapIcon,
+  ManageAccounts as CodigosSapIcon,
   Person as PersonIcon,
   Logout as LogoutIcon,
   Close as CloseIcon,
+  ArrowDropDown,
+  ExpandLess,
+  ExpandMore,
+  Hub as SaiModuleIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isSaiModulePath } from '../../config/navigation';
 import logo from '../../assets/neoenergia-logo.svg';
 
-const navItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-  { label: 'Gestão SAP', path: '/gestao-sap', icon: <GestaoSapIcon /> },
+const saiNavChildren = [
+  { label: 'Códigos SAP', path: '/gestao-sap', icon: <CodigosSapIcon /> },
   { label: 'Importação', path: '/importacao', icon: <ImportIcon /> },
   { label: 'Provisão', path: '/provisao', icon: <ProvisaoIcon /> },
   { label: 'Pedido', path: '/pedido', icon: <PedidoIcon /> },
@@ -33,19 +37,52 @@ const navItems = [
   { label: 'Contratos', path: '/contratos', icon: <ContratosIcon /> },
 ];
 
+const navButtonSx = (active) => ({
+  color: 'white',
+  fontSize: '0.82rem',
+  px: 1.5,
+  py: 0.75,
+  borderRadius: 2,
+  bgcolor: active ? 'rgba(255,255,255,0.18)' : 'transparent',
+  '&:hover': { bgcolor: 'rgba(255,255,255,0.12)' },
+});
+
+const drawerItemSx = {
+  borderRadius: 2,
+  mb: 0.5,
+  color: 'text.primary',
+  '&.Mui-selected': {
+    bgcolor: '#DCEBE1',
+    color: 'primary.dark',
+    '& .MuiListItemIcon-root': { color: 'primary.main' },
+    '&:hover': { bgcolor: '#C5DDD0' },
+  },
+  '&:hover': { bgcolor: '#F0F7F3' },
+};
+
 export default function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sapDrawerOpen, setSapDrawerOpen] = useState(false);
+  const [sapMenuAnchor, setSapMenuAnchor] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  const saiSectionActive = isSaiModulePath(location.pathname);
+
+  const openDrawer = () => {
+    setSapDrawerOpen(saiSectionActive);
+    setDrawerOpen(true);
+  };
+
   const handleNav = (path) => {
     navigate(path);
     setDrawerOpen(false);
+    setSapMenuAnchor(null);
   };
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);
@@ -73,6 +110,34 @@ export default function Header() {
 
   const isActive = (path) => location.pathname === path;
 
+  const renderDrawerNavItem = (item, nested = false) => (
+    <ListItemButton
+      key={item.path}
+      onClick={() => handleNav(item.path)}
+      selected={isActive(item.path)}
+      sx={{
+        ...drawerItemSx,
+        pl: nested ? 4 : 2,
+      }}
+    >
+      <ListItemIcon
+        sx={{
+          color: isActive(item.path) ? 'primary.main' : 'text.secondary',
+          minWidth: 40,
+        }}
+      >
+        {item.icon}
+      </ListItemIcon>
+      <ListItemText
+        primary={item.label}
+        primaryTypographyProps={{
+          fontSize: nested ? '0.9rem' : '0.95rem',
+          fontWeight: isActive(item.path) ? 700 : 500,
+        }}
+      />
+    </ListItemButton>
+  );
+
   return (
     <>
       <AppBar
@@ -87,7 +152,7 @@ export default function Header() {
             <IconButton
               color="inherit"
               edge="start"
-              onClick={() => setDrawerOpen(true)}
+              onClick={openDrawer}
               sx={{ mr: 1 }}
             >
               <MenuIcon />
@@ -103,24 +168,61 @@ export default function Header() {
           />
 
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 0.5, flexGrow: 1 }}>
-              {navItems.map((item) => (
-                <Button
-                  key={item.path}
-                  onClick={() => handleNav(item.path)}
-                  sx={{
-                    color: 'white',
-                    fontSize: '0.82rem',
-                    px: 1.5,
-                    py: 0.75,
-                    borderRadius: 2,
-                    bgcolor: isActive(item.path) ? 'rgba(255,255,255,0.18)' : 'transparent',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.12)' },
-                  }}
-                >
-                  {item.label}
-                </Button>
-              ))}
+            <Box sx={{ display: 'flex', gap: 0.5, flexGrow: 1, alignItems: 'center' }}>
+              <Button
+                onClick={() => handleNav('/dashboard')}
+                sx={navButtonSx(isActive('/dashboard'))}
+              >
+                Dashboard
+              </Button>
+
+              <Button
+                onClick={(e) => setSapMenuAnchor(e.currentTarget)}
+                endIcon={<ArrowDropDown />}
+                sx={navButtonSx(saiSectionActive)}
+                aria-controls={sapMenuAnchor ? 'sai-nav-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={sapMenuAnchor ? 'true' : undefined}
+              >
+                SAI
+              </Button>
+              <Menu
+                id="sai-nav-menu"
+                anchorEl={sapMenuAnchor}
+                open={Boolean(sapMenuAnchor)}
+                onClose={() => setSapMenuAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      mt: 0.75,
+                      minWidth: 220,
+                      borderRadius: 2,
+                      boxShadow: '0 8px 30px rgba(0,64,66,0.15)',
+                    },
+                  },
+                }}
+              >
+                {saiNavChildren.map((item) => (
+                  <MenuItem
+                    key={item.path}
+                    onClick={() => handleNav(item.path)}
+                    selected={isActive(item.path)}
+                    sx={{
+                      gap: 1.5,
+                      py: 1.1,
+                      fontWeight: isActive(item.path) ? 700 : 500,
+                      bgcolor: isActive(item.path) ? '#F0F7F3' : 'transparent',
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32, color: isActive(item.path) ? 'primary.main' : 'text.secondary' }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    {item.label}
+                  </MenuItem>
+                ))}
+              </Menu>
             </Box>
           )}
 
@@ -150,7 +252,6 @@ export default function Header() {
         </Toolbar>
       </AppBar>
 
-      {/* Avatar dropdown menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -198,7 +299,6 @@ export default function Header() {
         </DialogActions>
       </Dialog>
 
-      {/* Mobile / tablet Drawer — apenas navegação */}
       <Drawer
         anchor="left"
         open={drawerOpen}
@@ -233,41 +333,56 @@ export default function Header() {
         </Box>
 
         <List sx={{ px: 1, py: 2, flex: 1 }}>
-          {navItems.map((item) => (
-            <ListItemButton
-              key={item.path}
-              onClick={() => handleNav(item.path)}
-              selected={isActive(item.path)}
+          <ListItemButton
+            onClick={() => handleNav('/dashboard')}
+            selected={isActive('/dashboard')}
+            sx={drawerItemSx}
+          >
+            <ListItemIcon
               sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                color: 'text.primary',
-                '&.Mui-selected': {
-                  bgcolor: '#DCEBE1',
-                  color: 'primary.dark',
-                  '& .MuiListItemIcon-root': { color: 'primary.main' },
-                  '&:hover': { bgcolor: '#C5DDD0' },
-                },
-                '&:hover': { bgcolor: '#F0F7F3' },
+                color: isActive('/dashboard') ? 'primary.main' : 'text.secondary',
+                minWidth: 40,
               }}
             >
-              <ListItemIcon
-                sx={{
-                  color: isActive(item.path) ? 'primary.main' : 'text.secondary',
-                  minWidth: 40,
-                }}
-              >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontSize: '0.95rem',
-                  fontWeight: isActive(item.path) ? 700 : 500,
-                }}
-              />
-            </ListItemButton>
-          ))}
+              <DashboardIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Dashboard"
+              primaryTypographyProps={{
+                fontSize: '0.95rem',
+                fontWeight: isActive('/dashboard') ? 700 : 500,
+              }}
+            />
+          </ListItemButton>
+
+          <ListItemButton
+            onClick={() => setSapDrawerOpen((open) => !open)}
+            selected={saiSectionActive}
+            sx={drawerItemSx}
+          >
+            <ListItemIcon
+              sx={{
+                color: saiSectionActive ? 'primary.main' : 'text.secondary',
+                minWidth: 40,
+              }}
+            >
+              <SaiModuleIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="SAI"
+              primaryTypographyProps={{
+                fontSize: '0.95rem',
+                fontWeight: saiSectionActive ? 700 : 500,
+              }}
+            />
+            {sapDrawerOpen ? <ExpandLess color="action" /> : <ExpandMore color="action" />}
+          </ListItemButton>
+
+          <Collapse in={sapDrawerOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {saiNavChildren.map((item) => renderDrawerNavItem(item, true))}
+            </List>
+          </Collapse>
         </List>
       </Drawer>
     </>
