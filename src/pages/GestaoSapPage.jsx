@@ -7,8 +7,14 @@ import {
   MenuItem,
   Button,
   Chip,
+  FormControlLabel,
+  Switch,
+  Stack,
+  TablePagination,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, SearchOff } from '@mui/icons-material';
 import { useState } from 'react';
 
 const tiposCodigo = ['Material / Telecom', 'Serviço'];
@@ -29,16 +35,60 @@ const codigosMock = [
   { codigo: 'SRV-003', descricao: 'Manutenção Corretiva', tipo: 'Serviço', empresa: 'Neoenergia Cosern', transacao: 'Portal BDA' },
 ];
 
+function ResultadosEmptyState({ onLimparFiltros }) {
+  return (
+    <Box
+      sx={{
+        textAlign: 'center',
+        py: { xs: 5, sm: 6 },
+        px: 2,
+        borderRadius: 2,
+        bgcolor: '#F7FCF9',
+        border: '1px dashed',
+        borderColor: 'divider',
+      }}
+    >
+      <SearchOff sx={{ fontSize: 72, opacity: 0.35, mb: 2, color: 'primary.main' }} />
+      <Typography variant="h6" fontWeight={700} color="primary.dark" gutterBottom>
+        Nenhum código encontrado
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ maxWidth: 460, mx: 'auto', mb: 3 }}
+      >
+        Não há dados para os filtros selecionados. Tente alterar tipo, distribuidora
+        ou termos de busca.
+      </Typography>
+      <Button variant="outlined" color="primary" onClick={onLimparFiltros}>
+        Limpar filtros
+      </Button>
+    </Box>
+  );
+}
+
 export default function GestaoSapPage() {
-  const [tipo, setTipo] = useState('');
-  const [empresa, setEmpresa] = useState('');
+  const theme = useTheme();
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const [tipo, setTipo] = useState('Todos');
+  const [empresa, setEmpresa] = useState('Todas');
   const [busca, setBusca] = useState('');
   const [resultados, setResultados] = useState(null);
+  const [modoLista, setModoLista] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const showTable = !isTabletOrMobile || !modoLista;
+  const showList = isTabletOrMobile && modoLista;
+  const resultadosTabela = (resultados ?? []).slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   const handleBuscar = () => {
     const res = codigosMock.filter((c) => {
-      const matchTipo = !tipo || c.tipo === tipo;
-      const matchEmp = !empresa || c.empresa === empresa;
+      const matchTipo = tipo === 'Todos' || c.tipo === tipo;
+      const matchEmp = empresa === 'Todas' || c.empresa === empresa;
       const matchBusca =
         !busca
         || c.descricao.toLowerCase().includes(busca.toLowerCase())
@@ -46,6 +96,14 @@ export default function GestaoSapPage() {
       return matchTipo && matchEmp && matchBusca;
     });
     setResultados(res);
+    setPage(0);
+  };
+
+  const handleLimparFiltros = () => {
+    setTipo('Todos');
+    setEmpresa('Todas');
+    setBusca('');
+    setResultados(null);
   };
 
   return (
@@ -82,7 +140,7 @@ export default function GestaoSapPage() {
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
             >
-              <MenuItem value="">Todos</MenuItem>
+              <MenuItem value="Todos">Todos</MenuItem>
               {tiposCodigo.map((t) => (
                 <MenuItem key={t} value={t}>{t}</MenuItem>
               ))}
@@ -95,7 +153,7 @@ export default function GestaoSapPage() {
               value={empresa}
               onChange={(e) => setEmpresa(e.target.value)}
             >
-              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="Todas">Todas</MenuItem>
               {distribuidoras.map((d) => (
                 <MenuItem key={d} value={d}>{d}</MenuItem>
               ))}
@@ -135,13 +193,34 @@ export default function GestaoSapPage() {
             <Typography variant="h6" fontWeight={700} color="primary.dark" sx={{ mb: 2 }}>
               Resultados — {resultados.length} registros
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {resultados.length === 0 ? (
-                <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                  Nenhum código encontrado.
-                </Typography>
-              ) : (
-                resultados.map((r) => (
+            {resultados.length > 0 && isTabletOrMobile && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={modoLista}
+                      onChange={(e) => setModoLista(e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" fontWeight={600}>
+                      {modoLista ? 'Modo lista' : 'Modo tabela'}
+                    </Typography>
+                  }
+                  labelPlacement="end"
+                  sx={{ m: 0 }}
+                />
+              </Box>
+            )}
+
+            {resultados.length === 0 && (
+              <ResultadosEmptyState onLimparFiltros={handleLimparFiltros} />
+            )}
+
+            {resultados.length > 0 && showList && (
+              <Stack spacing={1.5}>
+                {resultados.map((r) => (
                   <Box
                     key={r.codigo}
                     sx={{
@@ -150,26 +229,108 @@ export default function GestaoSapPage() {
                       borderColor: 'divider',
                       borderRadius: 3,
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      flexWrap: 'wrap',
+                      flexDirection: 'column',
+                      alignItems: 'stretch',
+                      gap: 1.25,
                       bgcolor: 'white',
                       '&:hover': { bgcolor: '#F0F7F3' },
                     }}
                   >
-                    <Typography variant="body1" fontWeight={700} color="primary.dark" sx={{ minWidth: 90 }}>
-                      {r.codigo}
-                    </Typography>
-                    <Typography variant="body2" sx={{ flex: 1, minWidth: 160 }}>
-                      {r.descricao}
-                    </Typography>
-                    <Chip label={r.tipo} size="small" color={r.tipo === 'Serviço' ? 'secondary' : 'primary'} />
-                    <Chip label={r.empresa} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
-                    <Chip label={`Transação: ${r.transacao}`} size="small" sx={{ bgcolor: '#DCEBE1', fontSize: '0.75rem' }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700} color="primary.dark">
+                        {r.codigo}
+                      </Typography>
+                      <Chip label={r.tipo} size="small" color={r.tipo === 'Serviço' ? 'secondary' : 'primary'} />
+                    </Box>
+                    <Typography variant="body2">{r.descricao}</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Chip label={r.empresa} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+                      <Chip label={`Transação: ${r.transacao}`} size="small" sx={{ bgcolor: '#DCEBE1', fontSize: '0.75rem' }} />
+                    </Box>
                   </Box>
-                ))
-              )}
-            </Box>
+                ))}
+              </Stack>
+            )}
+
+            {resultados.length > 0 && showTable && (
+              <>
+                <Box sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', mb: 1 }}>
+                  <Box
+                    component="table"
+                    sx={{
+                      width: 'max-content',
+                      minWidth: '100%',
+                      borderCollapse: 'collapse',
+                      tableLayout: 'auto',
+                    }}
+                  >
+                    <Box component="thead">
+                      <Box component="tr">
+                        {['Código', 'Descrição', 'Tipo', 'Distribuidora', 'Transação'].map((h) => (
+                          <Box
+                            component="th"
+                            key={h}
+                            sx={{
+                              p: '12px 16px',
+                              textAlign: 'left',
+                              bgcolor: 'primary.dark',
+                              color: 'white',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {h}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
+                      {resultadosTabela.map((r, i) => (
+                        <Box
+                          component="tr"
+                          key={r.codigo}
+                          sx={{
+                            bgcolor: i % 2 === 0 ? 'white' : '#F0F7F3',
+                            '&:hover': { bgcolor: '#DCEBE1' },
+                          }}
+                        >
+                          <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem', color: 'primary.dark', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                            {r.codigo}
+                          </Box>
+                          <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem', minWidth: 240 }}>
+                            {r.descricao}
+                          </Box>
+                          <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap' }}>
+                            <Chip label={r.tipo} size="small" color={r.tipo === 'Serviço' ? 'secondary' : 'primary'} />
+                          </Box>
+                          <Box component="td" sx={{ p: '10px 16px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                            {r.empresa}
+                          </Box>
+                          <Box component="td" sx={{ p: '10px 16px', whiteSpace: 'nowrap' }}>
+                            <Chip label={r.transacao} size="small" variant="outlined" />
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+                <TablePagination
+                  component="div"
+                  count={resultados.length}
+                  page={page}
+                  onPageChange={(_, p) => setPage(p)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  rowsPerPageOptions={[5, 10, 25]}
+                  labelRowsPerPage="Linhas por página:"
+                  labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+                />
+              </>
+            )}
           </CardContent>
         </Card>
       )}
