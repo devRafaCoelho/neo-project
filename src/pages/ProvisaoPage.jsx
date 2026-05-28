@@ -239,9 +239,33 @@ export default function ProvisaoPage() {
                 helperText={fornecedorSelecionado ? 'Preenchido automaticamente' : ''}
               />
 
-              <TextField label="Nº NF (opcional)" fullWidth {...register('nfNumero')} />
+              <Controller
+                name="nfNumero"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Nº NF (opcional)"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: !!field.value || undefined } }}
+                  />
+                )}
+              />
 
-              <TextField label="Pedido de Compra (opcional)" fullWidth {...register('pedidoCompra')} />
+              <Controller
+                name="pedidoCompra"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Pedido de Compra (opcional)"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: !!field.value || undefined } }}
+                  />
+                )}
+              />
 
               <TextField
                 label="Nome do Solicitante *"

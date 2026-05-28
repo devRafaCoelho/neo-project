@@ -86,6 +86,10 @@ const theme = createTheme({
       },
     },
     MuiTextField: {
+      defaultProps: {
+        // Evita glitch visual de label em mobile (Safari/iOS) ao trocar foco entre campos.
+        InputLabelProps: { shrink: true },
+      },
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {

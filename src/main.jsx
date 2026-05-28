@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { ptBR } from '@mui/x-date-pickers/locales';
 import { SnackbarProvider } from 'notistack';
 import theme from './theme/theme';
 import './utils/dayjsPtBr';
@@ -12,7 +13,11 @@ import AppRouter from './router/AppRouter';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale="pt-br"
+        localeText={ptBR.components.MuiLocalizationProvider.defaultProps.localeText}
+      >
         <CssBaseline />
         <SnackbarProvider
           maxSnack={3}
