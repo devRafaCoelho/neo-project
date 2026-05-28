@@ -94,7 +94,7 @@ export default function RegisterPage() {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Box component="img" src={logo} alt="Neoenergia" sx={{ height: 56, mb: 1.5 }} />
             <Typography variant="h5" fontWeight={700} color="primary.dark">Criar Conta</Typography>
-            <Typography variant="body2" color="text.secondary">Sistema SAI — Neoenergia</Typography>
+            <Typography variant="body2" color="text.secondary">Portal da TO — Neoenergia</Typography>
           </Box>
 
           <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>

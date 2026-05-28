@@ -272,7 +272,7 @@ export default function DashboardPage() {
           Dashboard
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Visão geral do Sistema SAI — Neoenergia Telecom
+          Visão geral do Portal da TO — Neoenergia Telecom
         </Typography>
       </Box>
 

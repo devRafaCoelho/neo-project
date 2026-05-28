@@ -31,7 +31,7 @@ import { useBrandTheme } from '../../context/BrandThemeContext';
 import logo from '../../assets/neoenergia-logo.svg';
 
 const saiNavChildren = [
-  { label: 'Códigos SAP', path: '/gestao-sap', icon: <CodigosSapIcon /> },
+  { label: 'Gestão SAP', path: '/gestao-sap', icon: <CodigosSapIcon /> },
   { label: 'Importação', path: '/importacao', icon: <ImportIcon /> },
   { label: 'Provisão', path: '/provisao', icon: <ProvisaoIcon /> },
   { label: 'Pedido', path: '/pedido', icon: <PedidoIcon /> },

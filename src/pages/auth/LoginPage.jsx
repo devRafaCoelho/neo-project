@@ -39,7 +39,7 @@ export default function LoginPage() {
     await new Promise((r) => setTimeout(r, 600));
     const result = login(data.email, data.password);
     if (result.success) {
-      enqueueSnackbar('Bem-vindo ao Sistema SAI!', { variant: 'success' });
+      enqueueSnackbar('Bem-vindo ao Portal da TO!', { variant: 'success' });
       navigate('/dashboard');
     } else {
       setAuthError(result.message);
@@ -93,7 +93,7 @@ export default function LoginPage() {
               sx={{ height: 48, mb: 2 }}
             />
             <Typography variant="h5" fontWeight={700} color="primary.dark">
-              Sistema SAI
+              Portal da TO
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Faça login para acessar o sistema
