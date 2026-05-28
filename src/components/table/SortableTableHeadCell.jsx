@@ -13,7 +13,7 @@ const sortLabelSx = {
   '&:focus': { color: 'inherit' },
 };
 
-export const sortableThSx = {
+const sortableThSx = {
   p: '12px 16px',
   textAlign: 'left',
   bgcolor: 'primary.dark',
