@@ -156,6 +156,7 @@ export default function PedidoPage() {
   const [pedidoEmEdicao, setPedidoEmEdicao] = useState(null);
   const [pedidoVisualizacao, setPedidoVisualizacao] = useState(null);
   const [pedidoExclusao, setPedidoExclusao] = useState(null);
+  const [confirmarCancelamento, setConfirmarCancelamento] = useState(false);
   const [modoLista, setModoLista] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -303,6 +304,10 @@ export default function PedidoPage() {
     setEmpresaSelecionada(null);
     setContratosSelecionaveis([]);
     setContratoSelecionado(null);
+  };
+
+  const handleSolicitarCancelamento = () => {
+    setConfirmarCancelamento(true);
   };
 
   return (
@@ -842,7 +847,7 @@ export default function PedidoPage() {
                 },
               }}
             >
-              <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={handleCancelar}>
+              <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={handleSolicitarCancelamento}>
                 Cancelar
               </Button>
               <Button type="submit" variant="contained" startIcon={<Save />}>
@@ -897,6 +902,30 @@ export default function PedidoPage() {
           <Button variant="outlined" onClick={() => setPedidoExclusao(null)}>Cancelar</Button>
           <Button color="error" variant="contained" onClick={executarExclusaoSimulada}>
             Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={confirmarCancelamento} onClose={() => setConfirmarCancelamento(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Cancelar edição</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Tem certeza que deseja cancelar as alterações feitas?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outlined" onClick={() => setConfirmarCancelamento(false)}>
+            Continuar editando
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              setConfirmarCancelamento(false);
+              handleCancelar();
+            }}
+          >
+            Confirmar cancelamento
           </Button>
         </DialogActions>
       </Dialog>
